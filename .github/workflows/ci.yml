@@ -17,12 +17,13 @@ jobs:
         uses: astral-sh/setup-uv@v3
       - name: Set up Python
         run: uv python install 3.11
-      - name: Recon smoke (requests-only, offline-safe)
-        run: python 00_recon.py --check-only
+      - name: Install deps
+        run: uv sync --extra dev
+      - name: Recon smoke (live network checks against P1-P9; P6 allowed to fail)
+        run: uv run python 00_recon.py --check-only
       # Fixture-only tests once the mini-state fixture exists (Phase 1, §11) --
       # NEVER run statewide data through CI (§8): too large, too slow, and county
       # downloads/processing belong on a local machine, not a shared runner.
-      # - run: uv sync --extra dev
       # - run: uv run pytest
       # - run: uv run ruff check .
 

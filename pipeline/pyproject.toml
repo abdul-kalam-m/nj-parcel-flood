@@ -3,8 +3,6 @@ name = "nj-parcel-flood-pipeline"
 version = "0.1.0"
 description = "NJ Parcel Flood Risk Dashboard data pipeline: recon, parcel core, flood layers, intersections, scoring, aggregates, tiles (OPERATING_GUIDE.md §6.1)"
 requires-python = ">=3.11"
-# 00_recon.py is intentionally requests-only (no geopandas/duckdb) so recon runs fast
-# with a minimal install, same convention as FloodOps V2's pipeline.
 dependencies = [
     "requests>=2.32",
     "shapely>=2.0",

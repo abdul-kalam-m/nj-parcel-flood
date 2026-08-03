@@ -1,0 +1,44 @@
+{
+  "recon_P1": {
+    "source_url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
+    "retrieved_utc": "2026-08-03T01:56:56.306825+00:00",
+    "license_note": "public government/open data source (see RECON.md for full terms)",
+    "ok_at_recon": true,
+    "checked_utc": "2026-08-03T01:56:56.306825+00:00"
+  },
+  "recon_P3": {
+    "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer",
+    "retrieved_utc": "2026-08-03T01:56:56.308894+00:00",
+    "license_note": "public government/open data source (see RECON.md for full terms)",
+    "ok_at_recon": true,
+    "checked_utc": "2026-08-03T01:56:56.308894+00:00"
+  },
+  "recon_P4": {
+    "source_url": "https://mapsdep.nj.gov/arcgis/rest/services/Features/Hydrography/MapServer/48",
+    "retrieved_utc": "2026-08-03T01:56:56.310906+00:00",
+    "license_note": "public government/open data source (see RECON.md for full terms)",
+    "ok_at_recon": true,
+    "checked_utc": "2026-08-03T01:56:56.309956+00:00"
+  },
+  "recon_P7": {
+    "source_url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer",
+    "retrieved_utc": "2026-08-03T01:56:56.312905+00:00",
+    "license_note": "public government/open data source (see RECON.md for full terms)",
+    "ok_at_recon": true,
+    "checked_utc": "2026-08-03T01:56:56.311908+00:00"
+  },
+  "recon_P8": {
+    "source_url": "https://geo.nj.gov/arcgis/rest/services/Tasks/NJ_Geocode/GeocodeServer",
+    "retrieved_utc": "2026-08-03T01:56:56.313916+00:00",
+    "license_note": "public government/open data source (see RECON.md for full terms)",
+    "ok_at_recon": true,
+    "checked_utc": "2026-08-03T01:56:56.312905+00:00"
+  },
+  "recon_P9": {
+    "source_url": "https://tiles.openfreemap.org/styles/liberty",
+    "retrieved_utc": "2026-08-03T01:56:56.315907+00:00",
+    "license_note": "public government/open data source (see RECON.md for full terms)",
+    "ok_at_recon": true,
+    "checked_utc": "2026-08-03T01:56:56.314946+00:00"
+  }
+}
