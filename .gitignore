@@ -1,0 +1,22 @@
+# NJ Parcel Flood Risk Dashboard — see OPERATING_GUIDE.md §8
+# Raw + processed data are never committed (regenerable, statewide-scale, gitignored
+# per §8). artifacts/ IS committed but only ever holds small JSON (summaries, meta) —
+# big outputs (tiles, parquet) go to Cloudflare R2, never into this repo.
+data/raw/
+data/processed/
+
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node / web (from Phase 6 onward)
+node_modules/
+web/dist/
+.DS_Store
+
+# Local env
+*.local
+.env

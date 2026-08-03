@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Set up Python
+        run: uv python install 3.11
+      - name: Recon smoke (requests-only, offline-safe)
+        run: python 00_recon.py --check-only
+      # Fixture-only tests once the mini-state fixture exists (Phase 1, §11) --
+      # NEVER run statewide data through CI (§8): too large, too slow, and county
+      # downloads/processing belong on a local machine, not a shared runner.
+      # - run: uv sync --extra dev
+      # - run: uv run pytest
+      # - run: uv run ruff check .
+
+  web:
+    runs-on: ubuntu-latest
+    # Enabled from Phase 7 when web/ exists.
+    if: ${{ hashFiles('web/package.json') != '' }}
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm build

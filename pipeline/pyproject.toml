@@ -1,0 +1,33 @@
+[project]
+name = "nj-parcel-flood-pipeline"
+version = "0.1.0"
+description = "NJ Parcel Flood Risk Dashboard data pipeline: recon, parcel core, flood layers, intersections, scoring, aggregates, tiles (OPERATING_GUIDE.md §6.1)"
+requires-python = ">=3.11"
+# 00_recon.py is intentionally requests-only (no geopandas/duckdb) so recon runs fast
+# with a minimal install, same convention as FloodOps V2's pipeline.
+dependencies = [
+    "requests>=2.32",
+    "shapely>=2.0",
+    "pyproj>=3.6",
+    "pyogrio>=0.9",
+    "geopandas>=1.0",
+    "duckdb>=1.1",
+    "pyarrow>=17.0",
+]
+# GDAL/ogr2ogr (for FGDB ingest, §6.2) is a system dependency, not installable via
+# pip reliably on Windows -- install separately (conda-forge gdal, or OSGeo4W) and
+# verify `ogr2ogr --version` on PATH before Phase 1. 00_recon.py checks for it.
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
