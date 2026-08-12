@@ -5,6 +5,88 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-03 — Phase 1: parcel core + mini-state fixture (agent: sonnet-5)
+
+**⚠ Session note:** this phase spanned a real environment outage. Windows
+Application Control started blocking pandas' compiled `dtypes.pyx` module
+mid-session (`DLL load failed... An Application Control policy has blocked this
+file`) -- confirmed machine-wide, not project-specific (it broke FloodOps V2's
+already-working pipeline too). `01_parcel_core.py` was written and structurally
+reviewed while blocked, but **never actually executed** until the block cleared on
+its own (owner-side, nothing done here to force it) at the start of this entry's
+session. Recorded because "the script exists" and "the script ran and passed its
+own gates" are different claims, and only the second one is true here.
+
+**Critical finding *before* writing the ingest field list (would have been a real
+privacy bug otherwise):** empirically verified what `ST_ADDRESS`/`CITY_STATE`/
+`ZIP_CODE` actually contain, rather than trusting the Phase 0 sample. That sample
+(plain owner-occupied residential in one town) showed `ST_ADDRESS == PROP_LOC`,
+which looked like "situs address, safe to keep" -- but re-tested against apartment
+buildings, commercial parcels, and exempt/institutional properties and found clear
+counterexamples: `ST_ADDRESS` values of `"PO BOX 43"`, `"PO BOX 5369"`, and
+properties whose `ST_ADDRESS`+`CITY_STATE` point to an entirely different
+municipality than `PROP_LOC`. A property cannot have a PO Box as its own street
+address or be located in two towns at once -- **`ST_ADDRESS`/`CITY_STATE`/`ZIP_CODE`
+are the owner's mailing address fields**, exactly what §5.6 says must never
+propagate, despite being formatted like a property address. `PROP_LOC` is the real
+situs-address field and is the only address field in `parcel_master`'s schema.
+These fields are never requested from the source at all (not fetched-then-dropped),
+consistent with §5.6's "stripped at ingest boundary."
+
+**Done:**
+- Verified the §5.4 crosswalk against the real statewide code inventory (needed
+  `returnGeometry=false` on the ArcGIS distinct-values query -- without it the
+  service silently returned a single bogus row instead of a real error, a genuine
+  API quirk worth remembering). Sampled 8 counties spanning urban/rural/coastal:
+  **0 unmapped codes** — every `PROP_CLASS` value actually in use maps cleanly.
+- Wrote `01_parcel_core.py`: paginated FeatureServer ingest (2000 rows/page,
+  confirmed limit), §5.4 crosswalk + unmapped-code logging, `exempt` flag derived
+  from the 15A-15F set (matches the crosswalk, not a separately-maintained list),
+  composite fallback key (`county_mun_block_lot_qual`) always populated per §5.1,
+  geometry repair via `buffer(0)`.
+- **Built and ran the mini-state fixture for real** (Bound Brook — riverine,
+  explicitly required by the guide; Atlantic City — coastal; Mendham Boro, Morris
+  Co. — inland, deliberately in one of the 7 counties P4 doesn't cover, so it
+  exercises the `fut_coverage=false` path on purpose once Phase 2 runs). All three:
+  **join_rate 1.0, 0 duplicate PINs, 0 unmapped codes, 0 invalid/empty geometries**
+  post-repair. 2,666 / 16,534 / 1,879 parcels respectively.
+- **Privacy field audit (§11's explicit Phase 1 exit criterion), done for real**:
+  inspected the actual output schema and sample rows, not just the code -- zero
+  owner-name/mailing-address columns present (`pin, county, mun_code, mun_name,
+  block, lot, qual, situs_address, prop_class, class_group, exempt, land_val,
+  imprvt_val, net_value, area_acres, composite_key`).
+- Added `pipeline/tests/test_parcel_core.py` (7 tests: crosswalk correctness,
+  unmapped/blank-code handling, exempt-flag/crosswalk consistency, fixture privacy
+  audit, fixture geometry validity, master/geoms row-count and PIN-set parity).
+  11/11 tests pass (4 from Phase 0 + 7 new).
+- **Found and fixed a real bug by actually running the script, not just reading
+  it**: `gdf[["PAMS_PIN"]]` (selecting a single non-geometry column) silently
+  demotes a GeoDataFrame to a plain DataFrame; the subsequent `.geometry.is_valid`
+  call resolved to a plain pandas attribute access instead of the GeoSeries
+  accessor, crashing with `AttributeError`. Fixed by constructing the geoms
+  GeoDataFrame explicitly from the start rather than relying on implicit type
+  inference after column selection.
+
+**Decisions (§13.2):**
+- Fixture committed under `pipeline/tests/fixtures/` (small, ~7.4 MB total across
+  6 files) rather than `data/processed/` (gitignored, meant for statewide-scale
+  output) -- matches §8's repo layout intent ("fixtures/ (3-muni mini-state)"
+  listed under `pipeline/`, distinct from the real per-county data directory).
+
+**⚠ Deviations / open items:**
+- Statewide ingest (all 21 counties, ~3.48M parcels) has **not** been run yet --
+  Phase 1's exit criteria (join rate ≥97%, county counts ±2% statewide) are
+  currently only verified against the 3-town fixture, not the full state. This is
+  the immediate next step, not deferred to a later phase.
+- `ogr2ogr`/GDAL still not installed (noted in Phase 0) -- still not blocking,
+  since ingest is FeatureServer-query-based, not GDAL-based.
+
+**Next:** run `01_parcel_core.py --county ALL` for the full statewide ingest
+(21 counties), verify the QA gates for real at that scale, *then* Phase 2
+(`02_flood_layers.py`).
+
+---
+
 ## 2026-08-02 — Phase 0: bootstrap + recon (agent: sonnet-5)
 
 **Done:**

@@ -89,6 +89,19 @@ P6_CLAIMS_METADATA_URL = "https://www.fema.gov/api/open/v1/OpenFemaDataSets"
 P6_CLAIMS_QUERY_URL = "https://www.fema.gov/api/open/v2/FimaNfipClaims"
 P6_STATUS_KNOWN_UNAVAILABLE = True
 
+# NJ county name (as stored in the parcel composite's COUNTY field) -> standard FIPS
+# code, for {fips}.parquet/{fips}.gpkg file naming (§6.3/§6.5). Standard, stable
+# public reference data -- not independently re-verified per-county the way the live
+# services above were, but low risk of drift.
+COUNTY_FIPS: dict[str, str] = {
+    "ATLANTIC": "001", "BERGEN": "003", "BURLINGTON": "005", "CAMDEN": "007",
+    "CAPE MAY": "009", "CUMBERLAND": "011", "ESSEX": "013", "GLOUCESTER": "015",
+    "HUDSON": "017", "HUNTERDON": "019", "MERCER": "021", "MIDDLESEX": "023",
+    "MONMOUTH": "025", "MORRIS": "027", "OCEAN": "029", "PASSAIC": "031",
+    "SALEM": "033", "SOMERSET": "035", "SUSSEX": "037", "UNION": "039",
+    "WARREN": "041",
+}
+
 # P7: Census TIGERweb -- same service family as the FloodOps projects.
 TIGERWEB_STATE_COUNTY = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer"
 TIGERWEB_TRACTS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer"
