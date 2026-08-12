@@ -48,23 +48,42 @@ CLASS_GROUPS: dict[str, str] = {
 }
 EXEMPT_CODES = {"15A", "15B", "15C", "15D", "15E", "15F"}
 
+# (label, PCL_MUN exact code, county name) -- PCL_MUN, not "MUN_NAME LIKE ... AND
+# COUNTY=...": COUNTY/MUN_NAME are NULL for any parcel that never matched a MOD-IV
+# record (confirmed live, 2026-08-03 -- 405,573 statewide, ~11.7%), so a MUN_NAME/
+# COUNTY-based filter silently drops every one of them, exactly the bug that made
+# the join-rate QA gate read a tautological 100%. PCL_MUN comes from the base
+# parcel layer, independent of any MOD-IV join, so it's the field that actually
+# finds every parcel. Bound Brook explicitly required by the guide (riverine,
+# narrative link to FloodOps v1); Atlantic City = coastal (real P4 CAFE coverage);
+# Mendham Boro = inland (Morris Co., one of the 6 counties with no P4 coverage --
+# exercises the fut_coverage=false path deliberately).
 FIXTURE_MUNIS = [
-    # (label, where_clause) -- Bound Brook explicitly required by the guide
-    # (riverine, narrative link to FloodOps v1); Atlantic City = coastal (real P4
-    # CAFE coverage); Mendham Boro = inland (Morris Co., one of the 7 counties with
-    # no P4 coverage at all -- exercises the fut_coverage=false path deliberately).
-    ("bound-brook", "MUN_NAME LIKE 'BOUND BROOK%' AND COUNTY='SOMERSET'"),
-    ("atlantic-city", "MUN_NAME LIKE 'ATLANTIC CITY%' AND COUNTY='ATLANTIC'"),
-    ("mendham-boro", "MUN_NAME LIKE 'MENDHAM BORO%' AND COUNTY='MORRIS'"),
+    ("bound-brook", "1804", "SOMERSET"),
+    ("atlantic-city", "0102", "ATLANTIC"),
+    ("mendham-boro", "1418", "MORRIS"),
 ]
 
 
-def class_group(code: str | None) -> tuple[str, bool]:
-    code = (code or "").strip()
+def class_group(code) -> str:
+    # code can be None, NaN (float -- how a missing value round-trips through a
+    # mixed string/null GeoJSON->DataFrame column, confirmed live once the
+    # PCL_MUN-based fetch started genuinely returning MOD-IV-unmatched parcels
+    # with a real absent PROP_CLASS), or a real string. `code or ""` doesn't
+    # normalize NaN -- float('nan') is truthy in Python, so that produced a float
+    # instead of "" and crashed on .strip(). isinstance-check first instead.
+    #
+    # Returns just the group ("Other" for both "no code at all" and "a code that
+    # isn't in the crosswalk") -- callers that need to distinguish those two cases
+    # for QA purposes (§12.1: join rate and unmapped-code-rate are two *separate*
+    # gates, not one) should check for a present-but-unrecognized code themselves,
+    # not infer it from this function's "Other" result alone.
+    if not isinstance(code, str):
+        return "Other"
+    code = code.strip()
     if not code:
-        return "Other", True
-    group = CLASS_GROUPS.get(code)
-    return (group, False) if group else ("Other", True)
+        return "Other"
+    return CLASS_GROUPS.get(code, "Other")
 
 
 def fetch_where(where: str, force: bool) -> gpd.GeoDataFrame:
@@ -91,30 +110,53 @@ def fetch_where(where: str, force: bool) -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(rows, geometry="geometry", crs=lib.WGS84)
 
 
-def build_master(gdf: gpd.GeoDataFrame) -> tuple[pd.DataFrame, dict]:
-    n_total = len(gdf)
-    n_no_class = int((gdf["PROP_CLASS"].isna() | (gdf["PROP_CLASS"].astype(str).str.strip() == "")).sum())
-    groups, unmapped_flags = zip(*(class_group(c) for c in gdf["PROP_CLASS"])) if n_total else ((), ())
-    unmapped_codes = sorted({
-        str(c) for c, u in zip(gdf["PROP_CLASS"], unmapped_flags) if u and str(c).strip()
-    })
+def _clean_str(series: pd.Series) -> pd.Series:
+    """Null-safe string conversion -- plain .astype(str) turns a None/NaN cell into
+    the literal text "None"/"nan", which is worse than an empty string for a field
+    that's genuinely absent on unmatched parcels."""
+    return series.fillna("").astype(str)
+
+
+def build_master(gdf: gpd.GeoDataFrame, known_county: str):
+    # Returns (master_df, stats_dict, keep_mask) -- keep_mask lets fetch_and_write()
+    # apply the identical exact-dupe row selection to the geometry GeoDataFrame.
+    n_fetched = len(gdf)  # before exact-dupe collapse below; rate denominators use
+    # this (not the post-dedup row count) since a dropped exact duplicate doesn't
+    # change how many real, distinct parcels were or weren't matched.
+    has_code = gdf["PROP_CLASS"].apply(lambda c: isinstance(c, str) and c.strip() != "")
+    n_no_class = int((~has_code).sum())
+    groups = [class_group(c) for c in gdf["PROP_CLASS"]]
+    # "Unmapped" (§12.1: < 0.5% of parcels) means a REAL, present PROP_CLASS value
+    # our crosswalk doesn't recognize -- a genuine crosswalk gap. A parcel with no
+    # code at all isn't a crosswalk problem, it's a join-rate problem (n_no_class/
+    # join_rate above) -- conflating the two made an ordinary ~5-12% MOD-IV
+    # unmatched rate look like a wildly failing crosswalk (it isn't: the crosswalk
+    # itself was already verified against every code actually in use, Phase 1).
+    unmapped_mask = has_code & ~gdf["PROP_CLASS"].isin(CLASS_GROUPS)
+    unmapped_codes = sorted(set(gdf.loc[unmapped_mask, "PROP_CLASS"]))
 
     master = pd.DataFrame({
         "pin": gdf["PAMS_PIN"].astype(str),
-        "county": gdf["COUNTY"].astype(str),
+        # county: always the KNOWN county we queried for, never the source COUNTY
+        # field directly -- that field is NULL for any parcel without a MOD-IV
+        # match (see FIXTURE_MUNIS comment), which would otherwise put NaN/"None"
+        # into every county-level rollup for exactly the records this fix exists
+        # to stop losing.
+        "county": known_county,
         "mun_code": gdf["PCL_MUN"].astype(str),
-        "mun_name": gdf["MUN_NAME"].astype(str),
+        "mun_name": _clean_str(gdf["MUN_NAME"]),
         "block": gdf["PCLBLOCK"].astype(str),
         "lot": gdf["PCLLOT"].astype(str),
-        "qual": gdf["PCLQCODE"].astype(str),
-        "situs_address": gdf["PROP_LOC"].astype(str),
-        "prop_class": gdf["PROP_CLASS"].astype(str),
+        "qual": _clean_str(gdf["PCLQCODE"]),
+        "situs_address": _clean_str(gdf["PROP_LOC"]),
+        "prop_class": _clean_str(gdf["PROP_CLASS"]),
         "class_group": list(groups),
         "exempt": gdf["PROP_CLASS"].isin(EXEMPT_CODES),
         "land_val": pd.to_numeric(gdf["LAND_VAL"], errors="coerce"),
         "imprvt_val": pd.to_numeric(gdf["IMPRVT_VAL"], errors="coerce"),
         "net_value": pd.to_numeric(gdf["NET_VALUE"], errors="coerce"),
         "area_acres": pd.to_numeric(gdf["CALC_ACRE"], errors="coerce"),
+        "mod_iv_matched": has_code.to_numpy(),
     })
     # Composite key fallback for the rare case PIN isn't unique (§5.1) -- always
     # present, not just computed on collision, so downstream code never has to
@@ -122,24 +164,46 @@ def build_master(gdf: gpd.GeoDataFrame) -> tuple[pd.DataFrame, dict]:
     master["composite_key"] = (master["county"] + "_" + master["mun_code"] + "_" +
                                master["block"] + "_" + master["lot"] + "_" + master["qual"])
 
+    # §12.1: "PIN unique statewide (dupes logged + resolved by composite key)" --
+    # the guide anticipates dupes existing, so they aren't dropped unexamined. But
+    # an *exact*-duplicate row (same PIN, identical in every other column too --
+    # confirmed live: Mendham Boro's 1418_2301_14, both copies null/unmatched) adds
+    # nothing and would double-count in any aggregate, so those are collapsed. A
+    # dupe PIN whose rows actually *differ* is the real, more concerning case the
+    # composite-key fallback exists for -- logged, not silently resolved here.
+    exact_dupe_mask = master.duplicated(keep="first")
+    n_exact_dupes_dropped = int(exact_dupe_mask.sum())
+    keep_mask = ~exact_dupe_mask.to_numpy()  # returned below so fetch_and_write()
+    # applies the identical row selection to the geometry GeoDataFrame -- this
+    # dedup is attribute-only (geometry isn't one of master's columns), so
+    # filtering geoms independently by PIN afterward could silently pick a
+    # different, potentially-mismatched geometry for a conflicting-attribute PIN.
+    master = master.loc[keep_mask].reset_index(drop=True)
+    n_conflicting_dupe_pins = int(master["pin"].duplicated().sum())
+
     stats = {
-        "n_total": n_total,
-        "n_dupe_pin": int(master["pin"].duplicated().sum()),
+        "n_total": len(master),
+        "n_exact_dupes_dropped": n_exact_dupes_dropped,
+        "n_dupe_pin": n_conflicting_dupe_pins,
         "n_dupe_composite_key": int(master["composite_key"].duplicated().sum()),
-        "join_rate": round(1 - (n_no_class / n_total), 4) if n_total else None,
+        "n_mod_iv_unmatched": n_no_class,
+        "join_rate": round(1 - (n_no_class / n_fetched), 4) if n_fetched else None,
         "unmapped_class_codes": unmapped_codes,
-        "unmapped_count": sum(unmapped_flags),
-        "unmapped_pct": round(100 * sum(unmapped_flags) / n_total, 3) if n_total else 0,
+        "unmapped_count": int(unmapped_mask.sum()),
+        "unmapped_pct": round(100 * int(unmapped_mask.sum()) / n_fetched, 3) if n_fetched else 0,
     }
-    return master, stats
+    return master, stats, keep_mask
 
 
-def fetch_and_write(label: str, where: str, out_master, out_geoms, force: bool) -> dict:
+def fetch_and_write(label: str, where: str, known_county: str, out_master, out_geoms, force: bool) -> dict:
     gdf = fetch_where(where, force)
     if len(gdf) == 0:
         return {"label": label, "ok": False, "detail": "0 features returned"}
 
-    master, stats = build_master(gdf)
+    master, stats, keep_mask = build_master(gdf, known_county)
+    gdf = gdf.loc[keep_mask].reset_index(drop=True)  # same exact-dupe rows dropped
+    # from master, applied here too -- keeps master/geoms in 1:1 correspondence by
+    # construction rather than re-deriving it from PIN afterward.
     invalid_before = int((~gdf.geometry.is_valid).sum())
     # Build geoms as a real GeoDataFrame from construction -- selecting a single
     # non-geometry column (gdf[["PAMS_PIN"]]) silently demotes it to a plain
@@ -176,18 +240,19 @@ def main() -> int:
     if args.fixture:
         fixtures_dir = lib.PIPELINE_DIR / "tests" / "fixtures"
         results = []
-        for label, where in FIXTURE_MUNIS:
+        for label, pcl_mun, county in FIXTURE_MUNIS:
             print(f"\n--- fixture: {label} ---")
             r = fetch_and_write(
-                label, where,
+                label, f"PCL_MUN='{pcl_mun}'", county,
                 fixtures_dir / "parcel_master" / f"{label}.parquet",
                 fixtures_dir / "parcel_geoms" / f"{label}.gpkg",
                 args.force)
             results.append(r)
             if r["ok"]:
-                print(f"  {r['n_total']} parcels, join_rate={r['join_rate']}, "
-                      f"dupe_pin={r['n_dupe_pin']}, unmapped={r['unmapped_count']} "
-                      f"({r['unmapped_pct']}%), geom invalid before/after repair="
+                print(f"  {r['n_total']} parcels, join_rate={r['join_rate']} "
+                      f"({r['n_mod_iv_unmatched']} unmatched), dupe_pin={r['n_dupe_pin']}, "
+                      f"unmapped={r['unmapped_count']} ({r['unmapped_pct']}%), "
+                      f"geom invalid before/after repair="
                       f"{r['n_geom_invalid_before_repair']}/{r['n_geom_invalid_after_repair']}")
             else:
                 print(f"  [FAIL] {r['detail']}")
@@ -203,21 +268,23 @@ def main() -> int:
     results = []
     for county in counties:
         fips = lib.COUNTY_FIPS.get(county)
-        if not fips:
+        prefix = lib.COUNTY_PREFIX.get(county)
+        if not fips or not prefix:
             print(f"  [FAIL] unknown county name: {county!r}")
             results.append({"label": county, "ok": False, "detail": "unknown county name"})
             continue
         print(f"\n--- {county} ({fips}) ---")
         r = fetch_and_write(
-            county, f"COUNTY='{county}'",
+            county, f"PCL_MUN LIKE '{prefix}%'", county,
             lib.PROCESSED / "parcel_master" / f"{fips}.parquet",
             lib.PROCESSED / "parcel_geoms" / f"{fips}.gpkg",
             args.force)
         results.append(r)
         if r["ok"]:
-            print(f"  {r['n_total']} parcels, join_rate={r['join_rate']}, "
-                  f"dupe_pin={r['n_dupe_pin']}, unmapped={r['unmapped_count']} "
-                  f"({r['unmapped_pct']}%), geom invalid before/after repair="
+            print(f"  {r['n_total']} parcels, join_rate={r['join_rate']} "
+                  f"({r['n_mod_iv_unmatched']} unmatched), dupe_pin={r['n_dupe_pin']}, "
+                  f"unmapped={r['unmapped_count']} ({r['unmapped_pct']}%), "
+                  f"geom invalid before/after repair="
                   f"{r['n_geom_invalid_before_repair']}/{r['n_geom_invalid_after_repair']}")
             if r["unmapped_class_codes"]:
                 print(f"  unmapped codes seen: {r['unmapped_class_codes']}")

@@ -5,6 +5,141 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-12 — Phase 1 correction: PCL_MUN join-rate bug, statewide re-ingest, QA gate finding (agent: sonnet-5)
+
+**⚠ Session note:** started as Phase 2 work. Before trusting Phase 1 as a
+foundation, checked whether its exit gates (§11: join rate ≥97%, county counts
+±2%) had actually been verified at statewide scale -- the 2026-08-03 entry below
+explicitly flags this as *not yet done* ("Next: run `01_parcel_core.py --county
+ALL`..."). Running it for real surfaced a foundational bug that invalidates that
+entry's fixture-level join-rate numbers. This entry corrects the record rather
+than editing the one below (this file is append-only per its own header).
+
+**Done:**
+- **Root-cause bug found and fixed:** `COUNTY`, `MUN_NAME`, `PROP_CLASS`, and the
+  assessed-value fields are populated *only* when a MOD-IV tax-record join
+  succeeds -- they come from the join, not the base parcel/cadastral layer.
+  `01_parcel_core.py` was fetching per county via `WHERE COUNTY='X'`, which
+  therefore silently returned *only already-matched* parcels -- making "join
+  rate" a tautology (100% every time, since an unmatched parcel can never be
+  found by a filter on a field the join itself populates). `PCL_MUN` (base
+  parcel layer, populated regardless of join status) is the correct fetch key.
+  Switched to `WHERE PCL_MUN LIKE '{2-digit county prefix}%'`; verified the
+  prefix-to-county mapping against real records (not just assumed from the
+  known convention) and added it as `COUNTY_PREFIX` in `nj_parcel_lib.py`.
+- **Foundational shared-helper bug found and fixed:** ArcGIS servers report their
+  own server-side errors as a `{"error": {...}}` JSON body under HTTP 200 --
+  `raise_for_status()` never catches this. `get_json()` silently accepted these
+  as valid (sometimes empty) responses. Now raises `RuntimeError` on that
+  pattern. This was independently blocking Phase 2's P4 (CAFE) pagination too;
+  fixing it once in the shared helper resolved both.
+- `class_group()` crashed on missing `PROP_CLASS` (`NaN` arrives as a `float` in
+  a mixed-type pandas column; `(code or "").strip()` doesn't catch it since
+  `NaN` is truthy). Fixed with an explicit `isinstance(code, str)` check.
+- Separated two previously-conflated QA metrics: `join_rate` (MOD-IV match
+  completeness -- no code at all) vs. `unmapped_class_codes` (crosswalk
+  completeness -- a real code the §5.4 table doesn't recognize). Conflating them
+  had made Bound Brook's ordinary ~5% unmatched rate print as "unmapped," wrongly
+  implying a failing crosswalk.
+- Dedup logic per §12.1's own language ("PIN unique statewide, dupes logged +
+  resolved by composite key"): exact-duplicate rows (identical in every column)
+  are collapsed; genuinely-conflicting duplicate PINs are kept and counted
+  (`n_dupe_pin`), never silently merged.
+- `build_master()` now returns a `keep_mask` so `fetch_and_write()` filters the
+  source GeoDataFrame identically before building `geoms` -- master/geoms row
+  alignment guaranteed by construction, not re-derived by PIN after the fact.
+- `P4_COASTAL_COUNTIES` corrected 14→15 (added Gloucester): the Phase 0 count
+  was transcribed from an ArcGIS item's prose description, which was wrong --
+  the live data's own `COUNTY` field shows 15 distinct counties with 2,000+
+  Gloucester features, not a sliver. Fixed in `nj_parcel_lib.py` and
+  `test_recon.py`; `00_recon.py --force` re-run, `RECON.md`/`recon_report.json`/
+  `MANIFEST.json` regenerated.
+- Rewrote `pipeline/tests/test_parcel_core.py` (13 tests, was 7): added synthetic
+  offline tests (`_synthetic_gdf` helper) that directly assert the join-rate/
+  crosswalk-gap separation and the exact-vs-conflicting dedup behavior, so both
+  bugs above have a regression test that doesn't depend on live data. Rebuilt
+  the 3-town fixture with the corrected code. Full suite: **13/13 passing.**
+- **Ran the full statewide ingest** (21 counties) with all fixes applied and
+  computed the QA gates for real (not just on the fixture, per §11's actual
+  requirement):
+  - Total parcels: **3,478,722** vs. Phase 0 recon's recorded 3,478,727 -- a
+    5-record difference (0.0001%), comfortably inside the ±2% county-count gate.
+  - Unmapped class codes: **0** statewide (0.0%, gate requires <0.5%) -- the
+    §5.4 crosswalk itself is completely clean at full scale, confirming the
+    Phase 0 8-county spot-check held up.
+  - **MOD-IV join rate: 88.34% (3,073,154 / 3,478,722) -- below the required
+    ≥97% gate (§11, §12.1.2). See ⚠ below.**
+- Investigated Cape May County specifically (65.93%, the worst of 21 counties,
+  and 486 duplicate PINs -- also far more than any other county). Checked
+  whether unstable `resultOffset` pagination (no explicit `orderByFields`,
+  a known ArcGIS gotcha) could be duplicating/dropping records: repeated the
+  identical paginated query twice and compared -- **returned OBJECTIDs were
+  identical both times, same order**, ruling this out as the cause. Sampled
+  unmatched records: `QFARM` (farmland-assessment) and `C0001`/`C0003`
+  (condo-unit) qualifier codes both present. Sampled duplicate PINs: a cluster
+  around a "block 107.02/.07/.08/.011/.012" resubdivision series, all
+  unmatched, each appearing exactly twice -- consistent with genuine
+  source-data duplication (an unretired old geometry from a resurvey) rather
+  than a pipeline defect, though not chased to a fully definitive root cause
+  (would need an external MOD-IV source to confirm; out of scope this session).
+- Phase 2 (`02_flood_layers.py`), started but not complete: NJ county-boundary
+  fetch (TIGERweb) working; P4 (CAFE) fetch now fully working end-to-end
+  (OBJECTID-chunk pagination + bisection fallback + the `get_json()` fix
+  together -- confirmed 539/539 Cape May records recovered, where it previously
+  silently returned partial/empty results). P3 (NFHL) fetch still unreliable on
+  at least one county -- see ⚠ below.
+
+**Decisions (§13.2):**
+- Did **not** adjust, lower, or reinterpret the join-rate gate to make it pass.
+  §13.3 lists QA gate thresholds among what must never change without owner
+  approval, and §13.4 explicitly prohibits weakening gates to pass. Reporting
+  the finding to the owner instead (this entry + direct chat report).
+- Treated the corrected, full statewide run as the true basis for evaluating
+  Phase 1's exit gates, not the fixture-only numbers recorded in the
+  2026-08-03 entry below, since a fixture built with the same buggy COUNTY-fetch
+  can't reveal a bug that only manifests as "the fetch itself excludes the
+  failure mode."
+
+**⚠ Deviations / open items:**
+- **The 2026-08-03 entry's fixture join-rate numbers (1.0 / 1.0 / 1.0 for all
+  three towns) are now known to be an artifact of the COUNTY-fetch bug, not
+  real.** Not edited there (append-only log) -- correct current numbers:
+  Bound Brook 95.11% (2,803 parcels, 137 unmatched), Atlantic City 99.48%
+  (16,621 parcels, 87 unmatched), Mendham Boro 98.43% (1,908 parcels, 30
+  unmatched, 1 exact duplicate collapsed).
+- **Statewide MOD-IV join rate is 88.34%, below the required ≥97% gate.**
+  Per-county range 65.93% (Cape May, worst) to 98.79% (Union, best); clear
+  geographic pattern -- shore/coastal counties cluster low (Cape May 65.9%,
+  Ocean 70.7%, Burlington 80.0%, Atlantic 80.2%), dense inland/urban counties
+  cluster high (Union 98.8%, Morris 98.3%, Hudson 97.1%). This pattern is
+  consistent with (but not proof of) a real characteristic of coastal NJ parcel
+  data -- disproportionately more seasonal/vacation, condo/PUD common-element,
+  and post-Sandy resubdivided parcels -- rather than a residual join-key defect,
+  but this was not chased to a definitive external-source-verified root cause.
+  **Needs owner input on how to proceed**: accept as a documented, real
+  characteristic and revisit the gate/framing; investigate further with a
+  different join strategy or an external validation source; or proceed to
+  Phase 2 with this flagged as a known limitation. Full per-county table
+  available in the pipeline output (not reproduced here; see
+  `data/processed/parcel_master/*.parquet`, gitignored).
+- Phase 2's `fetch_nfhl_bbox()` (P3/NFHL) is not yet reliable for at least Cape
+  May County even after reducing page size 2000→200 -- failed again at a
+  different offset (`resultOffset=800`) with the same ArcGIS
+  error-under-HTTP-200 signature. `_fetch_p4_batch`'s bisection approach (which
+  fixed the equivalent problem for P4) has not yet been ported to this path.
+- Statewide `data/processed/parcel_master/` and `parcel_geoms/` (21 counties,
+  ~3.48M parcels) intentionally not committed (gitignored, matches §8's
+  data-handling convention) -- only code, tests, the 3-town fixture, and this
+  log are committed.
+- `ogr2ogr`/GDAL still not installed (noted since Phase 0) -- still not
+  blocking either P1 or P2's current FeatureServer-query approach.
+
+**Next:** Owner decision on the join-rate gate finding above. In parallel or
+after: port bisection to `fetch_nfhl_bbox()`, get P3 working end-to-end for all
+21 counties, complete Phase 2.
+
+---
+
 ## 2026-08-03 — Phase 1: parcel core + mini-state fixture (agent: sonnet-5)
 
 **⚠ Session note:** this phase spanned a real environment outage. Windows

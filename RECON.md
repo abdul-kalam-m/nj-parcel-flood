@@ -1,6 +1,6 @@
 # NJ Parcel Flood Risk Dashboard — Data Source Recon (RECON.md)
 
-Generated: 2026-08-03T01:56:56.317047+00:00 · auto-written by `pipeline/00_recon.py` (§4).
+Generated: 2026-08-12T05:11:40.183021+00:00 · auto-written by `pipeline/00_recon.py` (§4).
 
 ## Data sources (P1-P9)
 

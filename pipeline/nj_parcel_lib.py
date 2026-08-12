@@ -60,19 +60,26 @@ P3_NFHL_FLOOD_ZONES_LAYER = 28  # "Flood Hazard Zones" -- confirmed by full laye
 
 # P4: NJDEP Tidal Climate Adjusted Flood Elevation (CAFE SLR 5ft) -- confirmed live,
 # 54,571 features, single scenario (not multiple SLR increments): +5 ft added to the
-# FEMA coastal SFHA. NAVD88 (ftUS) height reference. Coastal-only: 14 of NJ's 21
+# FEMA coastal SFHA. NAVD88 (ftUS) height reference. Coastal-only: 15 of NJ's 21
 # counties (Atlantic, Bergen, Burlington, Camden, Cape May, Cumberland, Essex,
-# Hudson, Mercer, Middlesex, Monmouth, Ocean, Salem, Union) -- the other 7
-# (Gloucester, Hunterdon, Morris, Passaic, Somerset, Sussex, Warren) get
-# fut_coverage=false per §5.2, exactly as the guide's own partial-coverage
-# contingency anticipated. An ArcGIS *item* pointing at this same URL is flagged
+# Gloucester, Hudson, Mercer, Middlesex, Monmouth, Ocean, Salem, Union) -- the other
+# 6 (Hunterdon, Morris, Passaic, Somerset, Sussex, Warren) get fut_coverage=false
+# per §5.2, exactly as the guide's own partial-coverage contingency anticipated.
+# CORRECTION 2026-08-03 (Phase 2): the Phase 0 list (14 counties, no Gloucester) was
+# transcribed from the ArcGIS item's own description text, which is wrong/stale --
+# querying the layer's actual COUNTY field directly shows Gloucester present, and
+# substantially so (2,000 features returned for Gloucester alone, hitting the
+# pagination cap -- not a sliver). Lesson: prefer querying the data itself over
+# trusting a provider's prose description, even for something that sounds like a
+# simple factual list. An ArcGIS *item* pointing at this same URL is flagged
 # "deprecated" in its metadata, but the underlying MapServer layer itself is live
 # and is what NJDEP's own current DCAT catalog (gisdata-njdep.opendata.arcgis.com)
 # points to -- treated as a stale item-level label, not a real service issue.
 P4_CAFE_SLR5_URL = "https://mapsdep.nj.gov/arcgis/rest/services/Features/Hydrography/MapServer/48"
 P4_COASTAL_COUNTIES = [
     "ATLANTIC", "BERGEN", "BURLINGTON", "CAMDEN", "CAPE MAY", "CUMBERLAND",
-    "ESSEX", "HUDSON", "MERCER", "MIDDLESEX", "MONMOUTH", "OCEAN", "SALEM", "UNION",
+    "ESSEX", "GLOUCESTER", "HUDSON", "MERCER", "MIDDLESEX", "MONMOUTH", "OCEAN",
+    "SALEM", "UNION",
 ]
 
 # P6: OpenFEMA FIMA NFIP Redacted Claims. CONFIRMED UNAVAILABLE 2026-08-02: the
@@ -93,6 +100,27 @@ P6_STATUS_KNOWN_UNAVAILABLE = True
 # code, for {fips}.parquet/{fips}.gpkg file naming (§6.3/§6.5). Standard, stable
 # public reference data -- not independently re-verified per-county the way the live
 # services above were, but low risk of drift.
+# NJ's standard 2-digit municipal-code county prefix (01=Atlantic .. 21=Warren,
+# alphabetical -- confirmed empirically against real records, 2026-08-03, not just
+# assumed from the well-known convention). Load-bearing: the parcel composite's own
+# COUNTY/MUN_NAME text fields are NULL for any parcel that never matched a MOD-IV
+# record (confirmed live: 405,573 statewide, ~11.7% -- these are real parcel
+# geometries with real PIN/block/lot, just no assessment data joined, plausibly
+# condo sub-units and new construction not yet on the tax roll given the block/lot
+# patterns observed). Filtering by COUNTY='X' silently drops all of them, which
+# would have made the join-rate QA gate (§12.1.2, >=97%) tautologically read 100%
+# (only ever measuring completeness among records that already required a
+# successful join to be found at all) while the true statewide rate was ~88%.
+# PCL_MUN is populated from the base parcel layer, before/independent of any MOD-IV
+# join, so filtering on its prefix instead is what actually captures every parcel.
+COUNTY_PREFIX: dict[str, str] = {
+    "ATLANTIC": "01", "BERGEN": "02", "BURLINGTON": "03", "CAMDEN": "04",
+    "CAPE MAY": "05", "CUMBERLAND": "06", "ESSEX": "07", "GLOUCESTER": "08",
+    "HUDSON": "09", "HUNTERDON": "10", "MERCER": "11", "MIDDLESEX": "12",
+    "MONMOUTH": "13", "MORRIS": "14", "OCEAN": "15", "PASSAIC": "16",
+    "SALEM": "17", "SOMERSET": "18", "SUSSEX": "19", "UNION": "20", "WARREN": "21",
+}
+
 COUNTY_FIPS: dict[str, str] = {
     "ATLANTIC": "001", "BERGEN": "003", "BURLINGTON": "005", "CAMDEN": "007",
     "CAPE MAY": "009", "CUMBERLAND": "011", "ESSEX": "013", "GLOUCESTER": "015",
@@ -123,7 +151,14 @@ def _cache_path(url: str, params: dict | None) -> Path:
 
 
 def get_json(url: str, params: dict | None = None, force: bool = False,
-             retries: int = 3, timeout: int = 60) -> dict:
+             retries: int = 3, timeout: int = 60, backoff_base: float = 1.5) -> dict:
+    """backoff_base controls retry spacing (backoff_base * attempt seconds).
+    Some hosts (e.g. mapsdep.nj.gov -- confirmed live, §4 P4 note: an older,
+    ArcGIS-item-flagged-deprecated NJDEP server) return HTTP 200 with an HTML
+    bot-challenge page instead of JSON once a request budget is exceeded, which
+    looks the same as a transient error here but needs a much longer cooldown
+    than the default 1.5/3/4.5s backoff to actually clear -- pass a larger
+    backoff_base for those, rather than raising the default for every source."""
     cpath = _cache_path(url, params)
     if cpath.exists() and not force:
         return json.loads(cpath.read_text(encoding="utf-8"))
@@ -133,12 +168,20 @@ def get_json(url: str, params: dict | None = None, force: bool = False,
             r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
             r.raise_for_status()
             data = r.json()
+            # ArcGIS REST commonly reports its own server-side errors as a
+            # {"error": {...}} JSON body under an HTTP 200 status (confirmed live,
+            # 2026-08-03, P4 note in 02_flood_layers.py) -- raise_for_status() never
+            # catches this since the status code itself is fine. Found via a real,
+            # silent data-loss bug: a batch that failed this way produced 0 rows and
+            # 0 exceptions, so a caller's own bisection/retry logic never triggered.
+            if isinstance(data, dict) and "error" in data:
+                raise RuntimeError(f"ArcGIS error payload (HTTP {r.status_code}): {data['error']}")
             cpath.parent.mkdir(parents=True, exist_ok=True)
             cpath.write_text(json.dumps(data), encoding="utf-8")
             return data
         except Exception as e:  # noqa: BLE001
             last = e
-            time.sleep(1.5 * (attempt + 1))
+            time.sleep(backoff_base * (attempt + 1))
     raise RuntimeError(f"GET JSON failed after {retries}: {url} params={params}: {last}")
 
 
@@ -159,6 +202,36 @@ def check_url(url: str, params: dict | None = None, timeout: int = 30) -> dict:
         return {"ok": ok and is_json, "status_code": r.status_code, "detail": detail}
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "status_code": None, "detail": str(e)}
+
+
+def esri_rings_to_geom(rings: list):
+    """Convert an esri-JSON polygon's `rings` array to a shapely (Multi)Polygon.
+
+    Needed for FEMA's NFHL service (§4 P3): its Flood Hazard Zones layer 500s on
+    `f=geojson` (confirmed live, 2026-08-03 -- an older federal ArcGIS server that
+    doesn't support the same output formats as the modern NJOGIS/Esri-hosted
+    services this pipeline otherwise uses), so P3 must be fetched as `f=json` and
+    converted manually rather than relying on shapely.geometry.shape(). Standard
+    esri convention: a clockwise ring starts a new exterior polygon; a
+    counter-clockwise ring is a hole in the preceding exterior.
+    """
+    from shapely.geometry import MultiPolygon, Polygon
+    polys = []
+    exterior, holes = None, []
+    for ring in rings:
+        area = sum(ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]
+                   for i in range(len(ring) - 1))
+        if area < 0:  # clockwise = new exterior
+            if exterior is not None:
+                polys.append(Polygon(exterior, holes))
+            exterior, holes = ring, []
+        else:
+            holes.append(ring)
+    if exterior is not None:
+        polys.append(Polygon(exterior, holes))
+    if not polys:
+        return None
+    return polys[0] if len(polys) == 1 else MultiPolygon(polys)
 
 
 def manifest_add(name: str, source_url: str, local_path: Path | None,

@@ -3,12 +3,15 @@ import nj_parcel_lib as lib
 
 
 def test_p4_coastal_counties_count():
-    # 14 of NJ's 21 counties have CAFE SLR 5ft coverage (verified live, 2026-08-02) --
-    # the other 7 must get fut_coverage=false per §5.2, never silently treated as
+    # 15 of NJ's 21 counties have CAFE SLR 5ft coverage (verified against the layer's
+    # actual COUNTY field, 2026-08-03 -- corrected from an initial 14-county list
+    # transcribed from the provider's prose description, which omitted Gloucester).
+    # The other 6 must get fut_coverage=false per §5.2, never silently treated as
     # "no future risk".
-    assert len(lib.P4_COASTAL_COUNTIES) == 14
-    assert "GLOUCESTER" not in lib.P4_COASTAL_COUNTIES  # inland, correctly excluded
+    assert len(lib.P4_COASTAL_COUNTIES) == 15
+    assert "GLOUCESTER" in lib.P4_COASTAL_COUNTIES  # has real coverage, not a sliver
     assert "OCEAN" in lib.P4_COASTAL_COUNTIES  # coastal, correctly included
+    assert "HUNTERDON" not in lib.P4_COASTAL_COUNTIES  # inland, correctly excluded
 
 
 def test_p1_max_record_count_matches_verified_value():

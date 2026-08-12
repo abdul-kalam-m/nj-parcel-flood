@@ -3,7 +3,7 @@
 **Project:** NJ Parcel Flood Risk Dashboard — statewide parcel-scale flood exposure for financial & insurance review
 **Owner:** Abdul Kalam Azad Mustaq (ar.abdulkalam.mustaq@gmail.com)
 **Guide version:** 1.1 — written 2026-07-18, repo location corrected 2026-08-02
-**Status:** Phase 0 in progress
+**Status:** Phase 1 done — QA gate finding pending owner decision (statewide MOD-IV join rate 88.34%, below required ≥97%; see PROGRESS.md 2026-08-12). Phase 2 started (NFHL fetch still unreliable for some counties).
 **Guide location (canonical):** `I:\My Drive\RUTGERS\Portfolio Projects\8. NJ FLOOD RISK DASHBOARD\OPERATING_GUIDE.md`
 **Source spec:** `nj_parcel_flood_risk_spec_sheet.md` (same folder) — requirements source. This guide operationalizes it; **on conflict, this guide wins** (deviations listed in §2).
 **Sibling:** Project 9 (`9. NJ HAZARD DASHBOARD\`) reuses this project's **parcel core** (§6.5). Build order matters: this project first.
