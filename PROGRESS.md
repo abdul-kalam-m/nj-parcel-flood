@@ -5,6 +5,88 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-12 — Phase 2: flood layers (NFHL + CAFE SLR 5ft), statewide (agent: sonnet-5)
+
+**Decisions (§13.2) -- owner input received on the entry below:** given the
+join-rate finding (statewide MOD-IV join rate 88.34%, below the ≥97% gate),
+owner's explicit direction: **proceed with Phase 2; flag the join rate as a
+known limitation** rather than investigate further or adjust the gate for now.
+Recorded here per §13.3 (QA gate thresholds need owner approval to change --
+this is that approval being exercised, not a unilateral change). Not resolved,
+just consciously deferred with the owner's sign-off; revisit before publishing
+final scores/UI copy (§5.7 disclaimer should account for it).
+
+**Done:**
+- Ported the P4 bisection pattern to P3/NFHL: `fetch_nfhl_bbox()` now uses
+  `returnIdsOnly` + OBJECTID-chunking (200/chunk) + recursive bisect-on-failure
+  (`_fetch_nfhl_batch`), replacing the `resultOffset` paging that was still
+  failing on Cape May even after the earlier page-size reduction (2000→200).
+  Verified live on Cape May alone first: all 2,712 zones recovered cleanly,
+  zero bisection needed that time.
+- **Found and fixed a second, different failure mode while running statewide**:
+  after ~7 counties of sustained requests, `hazards.fema.gov` started forcibly
+  resetting the TCP connection (`WinError 10054`) on the plain `returnIdsOnly`
+  call itself -- not an ArcGIS `{"error":...}` payload, so it trips before the
+  batch-level bisection logic even applies. Same class of problem already
+  documented in `get_json()`'s docstring for `mapsdep.nj.gov` (an older host's
+  request-budget throttling needing a longer cooldown, not faster retries).
+  Fixed: raised `retries`/`backoff_base` on the `returnIdsOnly` and NFHL-batch
+  calls, added a 1.5s inter-county pace in `main()`'s loop. Resumed the
+  statewide run *without* `--force` afterward so the 7 already-succeeded
+  counties replayed from local cache instead of re-hammering the host.
+- Added `pipeline/tests/test_flood_layers.py` -- **Phase 2 had zero test
+  coverage before this**. 10 offline tests (no network): `esri_rings_to_geom()`
+  orientation/hole handling (untested elsewhere despite being load-bearing),
+  `zone_inventory()` aggregation, and -- the most load-bearing set -- both
+  `_fetch_p4_batch`/`_fetch_nfhl_batch` bisection helpers exercised via a
+  monkeypatched `lib.get_json` that fails on a chosen objectId, asserting the
+  good records are still recovered and the bad one is logged, not lost. Full
+  suite: **23/23 passing** (13 from Phase 1 + 10 new).
+- **Ran the full statewide Phase 2 ingest (21/21 counties), completed
+  end-to-end for the first time**:
+  - NFHL zone counts range Hudson (1,095 zones) to Bergen (12,986); every
+    county produced a plausible, non-zero SFHA subset.
+  - **15/21 counties have P4 (CAFE SLR 5ft) coverage** -- exact match to
+    `lib.P4_COASTAL_COUNTIES`, as expected. The other 6 (Hunterdon, Morris,
+    Passaic, Somerset, Sussex, Warren) correctly show "no data", not zero
+    features -- the §5.2 `fut_coverage=false` distinction Phase 3 needs.
+  - **13 NFHL records skipped statewide, across only 3 unique objectIds**
+    (2010306, 1245792, 1345138) -- each recurs across *multiple adjacent
+    counties'* results (e.g. 2010306 in Ocean, Atlantic, Gloucester, Camden,
+    Burlington). Consistent with genuinely-bad source records sitting near
+    multi-county bounding-box overlaps (P3 is fetched per-county bbox, not
+    exact polygon, by design -- see module docstring), not a pipeline defect.
+    Logged in `FLOOD_COVERAGE.md`, not silently dropped.
+  - Wrote `FLOOD_COVERAGE.md` + `data/processed/flood_coverage_report.json`
+    (§11 Phase 2 exit criteria: zone inventories per county + future-coverage
+    map -- both produced).
+
+**⚠ Deviations / open items:**
+- The join-rate limitation from Phase 1 is carried forward, not resolved --
+  see the entry below and the Decisions note above.
+- Minor, pre-existing, not fixed here: §6.3 describes pipeline stages as
+  "county-resumable with `--county FIPS`", but both `01_parcel_core.py` and
+  `02_flood_layers.py`'s actual `--county` flags take county *names* (e.g.
+  `"CAPE MAY"`), not FIPS codes -- consistent between the two scripts, just a
+  documentation/wording mismatch, not a functional bug. Worth a guide wording
+  fix at some point, not urgent.
+- No numeric QA gate applies to Phase 2 itself -- §11's Phase 2 row only
+  requires zone inventories + a future-coverage map (both done); §12.1's
+  geometry-validity gates are explicitly Phase-3-scoped per the same table.
+- 3 genuinely-bad NFHL source records statewide (not fixable client-side, see
+  Done above) -- re-check if FEMA's NFHL data gets refreshed before Phase 3.
+- Statewide `data/processed/flood_layers/` (NFHL + CAFE gpkg per county) and
+  `flood_coverage_report.json` intentionally not committed (gitignored,
+  matches §8's convention) -- `FLOOD_COVERAGE.md` (the human-readable summary)
+  is committed.
+
+**Next:** Phase 3 (`03_intersect.py`) -- parcel-level overlap metrics against
+both the NFHL and CAFE layers (§5.2 formulas), the heaviest stage (guide's own
+budget: ≤12h statewide, county-checkpointed). §12.1's geometry gates apply
+here for the first time.
+
+---
+
 ## 2026-08-12 — Phase 1 correction: PCL_MUN join-rate bug, statewide re-ingest, QA gate finding (agent: sonnet-5)
 
 **⚠ Session note:** started as Phase 2 work. Before trusting Phase 1 as a

@@ -28,4 +28,6 @@ by count and assessed value).
 
 ## Status
 
-Phase 0 (bootstrap + recon) in progress. See `PROGRESS.md`.
+Phase 2 (flood layers) done, statewide. Phase 3 (intersections) next. Known
+limitation carried from Phase 1, owner-approved: statewide MOD-IV join rate is
+88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and `FLOOD_COVERAGE.md`.

@@ -48,46 +48,80 @@ def fetch_nj_counties(force: bool) -> gpd.GeoDataFrame:
     return gdf
 
 
-NFHL_PAGE_SIZE = 200  # not the server's advertised maxRecordCount (2000) -- confirmed
+NFHL_ID_CHUNK = 200  # not the server's advertised maxRecordCount (2000) -- confirmed
 # live (Cape May) that this specific layer 500s on full-geometry pages of 500 but
-# succeeds at 200. Its polygons (following a convoluted barrier-island coastline)
-# are evidently far heavier per-feature than a generic maxRecordCount assumes;
-# this is a response-size/complexity limit, not a count limit (a returnCountOnly
-# query against the identical spatial filter succeeds instantly) and not the
-# per-record server bug seen on P4 (§ fetch_p4_county) -- a plain smaller page
-# size is the right fix here, not retries or bisection.
+# usually succeeds at 200. Its polygons (following a convoluted barrier-island
+# coastline) are evidently far heavier per-feature than a generic maxRecordCount
+# assumes. **First attempt was resultOffset paging at this same 200 page size --
+# insufficient on its own**: Cape May still failed at resultOffset=800 with the
+# identical {"error": {"code": 500, "message": "Error performing query
+# operation"}} signature seen on P4. So this is the same class of problem as
+# fetch_p4_county's per-batch server bug, not purely a response-size ceiling --
+# fixed with the same two-part fix: OBJECTID-chunk (avoids resultOffset
+# entirely) + bisect-on-failure (handles a chunk with an unusually heavy or
+# individually-broken record, regardless of chunk size).
+
+NFHL_BAD_IDS_LOG: list[int] = []  # populated by _fetch_nfhl_batch, reported in main()
+
+
+def _fetch_nfhl_batch(ids: list[int], force: bool, rows: list[dict]) -> None:
+    """Fetch one batch of P3/NFHL objectIds, appending parsed rows to `rows` in
+    place. Same bisection strategy as _fetch_p4_batch and the same rationale:
+    this host's 500 "Error performing query operation" shows up on specific
+    batches regardless of chunk size, so a fixed smaller size alone isn't
+    sufficient -- bisect on failure, and a still-failing single record is a
+    real bad record on the source side, logged and skipped rather than crashing
+    the whole county."""
+    try:
+        page = lib.get_json(f"{lib.P3_NFHL_BASE}/{lib.P3_NFHL_FLOOD_ZONES_LAYER}/query", params={
+            "objectIds": ",".join(str(x) for x in ids),
+            "outFields": "FLD_ZONE,ZONE_SUBTY,SFHA_TF,STATIC_BFE,V_DATUM,DEPTH",
+            "outSR": lib.WGS84, "f": "json"}, force=force, timeout=90, retries=2, backoff_base=2.5)
+    except RuntimeError:
+        if len(ids) == 1:
+            NFHL_BAD_IDS_LOG.append(ids[0])
+            return
+        mid = len(ids) // 2
+        _fetch_nfhl_batch(ids[:mid], force, rows)
+        _fetch_nfhl_batch(ids[mid:], force, rows)
+        return
+    for f in page.get("features", []):
+        rings = (f.get("geometry") or {}).get("rings")
+        if not rings:
+            continue
+        geom = lib.esri_rings_to_geom(rings)
+        if geom is not None:
+            rows.append({**f["attributes"], "geometry": geom})
 
 
 def fetch_nfhl_bbox(bbox: tuple[float, float, float, float], force: bool) -> gpd.GeoDataFrame:
     # f=json (esri JSON), not geojson -- this specific FEMA layer 500s on geojson
     # output (confirmed live, §4 P3 note). Geometry converted via
     # lib.esri_rings_to_geom() instead of shapely.geometry.shape().
+    # OBJECTID-chunk + bisection, not resultOffset paging -- see NFHL_ID_CHUNK note.
+    # retries=4/backoff_base=2.5 (raised from the get_json() defaults), confirmed
+    # live 2026-08-12: hazards.fema.gov started forcibly resetting the TCP
+    # connection (WinError 10054, not an ArcGIS {"error":...} payload -- this
+    # trips before a single byte of JSON comes back, so the batch-level
+    # bisection fallback below can't help) on this exact call after ~7 counties
+    # of sustained requests in one run. Same class of problem already documented
+    # for mapsdep.nj.gov (§ get_json docstring): an older host's request-budget
+    # throttling, needing a longer cooldown rather than faster retries.
     xmin, ymin, xmax, ymax = bbox
+    ids_resp = lib.get_json(f"{lib.P3_NFHL_BASE}/{lib.P3_NFHL_FLOOD_ZONES_LAYER}/query", params={
+        "geometry": f"{xmin},{ymin},{xmax},{ymax}", "geometryType": "esriGeometryEnvelope",
+        "spatialRel": "esriSpatialRelIntersects", "inSR": lib.WGS84,
+        "returnIdsOnly": "true", "f": "json"}, force=force, timeout=60,
+        retries=4, backoff_base=2.5)
+    ids = sorted(ids_resp.get("objectIds") or [])
+    if not ids:
+        return gpd.GeoDataFrame(columns=["geometry"], geometry="geometry", crs=lib.WGS84)
+
     rows: list[dict] = []
-    offset = 0
-    while True:
-        page = lib.get_json(
-            f"{lib.P3_NFHL_BASE}/{lib.P3_NFHL_FLOOD_ZONES_LAYER}/query", params={
-                "geometry": f"{xmin},{ymin},{xmax},{ymax}", "geometryType": "esriGeometryEnvelope",
-                "spatialRel": "esriSpatialRelIntersects", "inSR": lib.WGS84,
-                "outFields": "FLD_ZONE,ZONE_SUBTY,SFHA_TF,STATIC_BFE,V_DATUM,DEPTH",
-                "outSR": lib.WGS84, "resultOffset": offset,
-                "resultRecordCount": NFHL_PAGE_SIZE, "f": "json"}, force=force, timeout=90,
-            retries=4, backoff_base=2.0)
-        feats = page.get("features", [])
-        if not feats:
-            break
-        for f in feats:
-            rings = (f.get("geometry") or {}).get("rings")
-            if not rings:
-                continue
-            geom = lib.esri_rings_to_geom(rings)
-            if geom is not None:
-                rows.append({**f["attributes"], "geometry": geom})
-        if len(feats) < NFHL_PAGE_SIZE:
-            break
-        offset += NFHL_PAGE_SIZE
-        time.sleep(0.3)  # light spacing between pages, cheap insurance
+    for i in range(0, len(ids), NFHL_ID_CHUNK):
+        _fetch_nfhl_batch(ids[i:i + NFHL_ID_CHUNK], force, rows)
+        if i + NFHL_ID_CHUNK < len(ids):
+            time.sleep(0.3)  # light spacing between chunks, cheap insurance
     if not rows:
         return gpd.GeoDataFrame(columns=["geometry"], geometry="geometry", crs=lib.WGS84)
     return gpd.GeoDataFrame(rows, geometry="geometry", crs=lib.WGS84)
@@ -170,6 +204,7 @@ def process_county(row, force: bool) -> dict:
     fips = lib.COUNTY_FIPS.get(county_upper)
     bbox = row.geometry.bounds  # (xmin, ymin, xmax, ymax)
 
+    n_nfhl_bad_before = len(NFHL_BAD_IDS_LOG)
     nfhl = fetch_nfhl_bbox(bbox, force)
     (FLOOD_DIR / "nfhl").mkdir(parents=True, exist_ok=True)
     if len(nfhl):
@@ -182,6 +217,7 @@ def process_county(row, force: bool) -> dict:
         "county": county_upper, "fips": fips,
         "nfhl_n_features": len(nfhl), "nfhl_n_sfha": n_sfha,
         "nfhl_zone_inventory": nfhl_inv,
+        "nfhl_bad_ids_skipped": NFHL_BAD_IDS_LOG[n_nfhl_bad_before:],
         "p4_covered": county_upper in lib.P4_COASTAL_COUNTIES,
     }
 
@@ -215,11 +251,18 @@ def main() -> int:
         counties = counties[counties["county_upper"].isin(wanted)]
 
     results = []
-    for _, row in counties.iterrows():
+    for i, (_, row) in enumerate(counties.iterrows()):
+        if i:
+            time.sleep(1.5)  # inter-county pacing -- see fetch_nfhl_bbox note on
+            # hazards.fema.gov resetting connections under sustained request volume
         print(f"\n--- {row['NAME']} ---")
         r = process_county(row, args.force)
         results.append(r)
         print(f"  NFHL: {r['nfhl_n_features']} zones ({r['nfhl_n_sfha']} SFHA)")
+        if r["nfhl_bad_ids_skipped"]:
+            print(f"  [WARN] {len(r['nfhl_bad_ids_skipped'])} NFHL record(s) skipped "
+                  f"(server-side query error, not a client issue): "
+                  f"{r['nfhl_bad_ids_skipped']}")
         if r["p4_covered"]:
             print(f"  P4 (CAFE SLR 5ft): {r['p4_n_features']} features")
             if r["p4_bad_ids_skipped"]:
@@ -232,7 +275,8 @@ def main() -> int:
     lib.PROCESSED.mkdir(parents=True, exist_ok=True)
     COVERAGE_REPORT.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
-    total_bad_ids = sum(len(r["p4_bad_ids_skipped"]) for r in results)
+    total_p4_bad_ids = sum(len(r["p4_bad_ids_skipped"]) for r in results)
+    total_nfhl_bad_ids = sum(len(r["nfhl_bad_ids_skipped"]) for r in results)
     n_covered = sum(1 for r in results if r["p4_covered"])
     lines = [
         "# NJ Parcel Flood Risk Dashboard — Flood Layer Coverage (FLOOD_COVERAGE.md)",
@@ -256,13 +300,25 @@ def main() -> int:
         "the UI must show \"future data n/a here\", never \"no future risk\" (§5.2).",
         "",
     ]
-    if total_bad_ids:
+    if total_p4_bad_ids:
         bad_by_county = {r["county"]: r["p4_bad_ids_skipped"] for r in results if r["p4_bad_ids_skipped"]}
         lines += [
-            f"**{total_bad_ids} P4 record(s) skipped statewide** (server-side query "
+            f"**{total_p4_bad_ids} P4 record(s) skipped statewide** (server-side query "
             "error on this specific record, reproduced directly against the source "
             "with a clean {\"error\":...} response -- not a client-side/rate-limit "
             "issue). Logged here, not silently dropped:",
+            "",
+        ]
+        for county, ids in bad_by_county.items():
+            lines.append(f"- {county}: objectIds {ids}")
+        lines.append("")
+    if total_nfhl_bad_ids:
+        bad_by_county = {r["county"]: r["nfhl_bad_ids_skipped"] for r in results if r["nfhl_bad_ids_skipped"]}
+        lines += [
+            f"**{total_nfhl_bad_ids} NFHL record(s) skipped statewide** (same "
+            "server-side query error pattern as P4, reproduced directly against "
+            "the source -- not a client-side/rate-limit issue). Logged here, not "
+            "silently dropped:",
             "",
         ]
         for county, ids in bad_by_county.items():
