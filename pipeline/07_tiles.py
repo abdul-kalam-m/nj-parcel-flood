@@ -92,16 +92,57 @@ def fetch_nj_cousub(force: bool) -> gpd.GeoDataFrame:
 # stripped the type word entirely and silently collapsed 19 pairs of real,
 # distinct towns onto the same key, inflating the muni count past 564 (the
 # fan-out from the resulting many-to-many join was the tell).
-_TYPE_CANON = {"TOWNSHIP": "TWP", "TWNSHP": "TWP", "TWSHP": "TWP", "TWP": "TWP",
-               "BOROUGH": "BORO", "BORO": "BORO",
+_TYPE_CANON = {"TOWNSHIP": "TWP", "TWNSHP": "TWP", "TWSHP": "TWP", "TWP": "TWP", "TW": "TWP",
+               "BOROUGH": "BORO", "BORO": "BORO", "BOR": "BORO",
                "CITY": "CITY", "TOWN": "TOWN", "VILLAGE": "VILLAGE"}
 _CONNECTOR_WORDS = {"AND", "THE", "OF"}
 # Common word abbreviations confirmed live in this project's own mun_name
 # data (MOD-IV), applied to every word, not just the trailing type word --
 # e.g. "NO HANOVER TWP", "SO HACKENSACK TWP", "MT LAUREL TWP" vs TIGER's full
-# "North Hanover", "South Hackensack", "Mount Laurel".
+# "North Hanover", "South Hackensack", "Mount Laurel". EAST/TROY/HILLS/POINT
+# added closing an 11-of-564-muni boundary gap (E Rutherford, Parsippany
+# Tr[oy] Hls, Pt[.] Pleasant Beach) -- each checked against the *full* live
+# TIGER+MOD-IV dataset (564 munis, 565 TIGER rows), not just the case it was
+# added for, since a general word rule can collide somewhere unintended (see
+# next paragraph for the one that did).
+#
+# RIVER -> RIV was tried here too (for "Upper Saddle River"/"UPPER SADDLE
+# RIV BORO") and reverted: it broke River Vale and River Edge, whose MOD-IV
+# mun_name stores the town name as one concatenated word ("RIVERVALE",
+# "RIVEREDGE") rather than "RIVER" + "VALE" -- TIGER's separate "River"
+# token got abbreviated to "RIV" while MOD-IV's fused token didn't, turning
+# two previously-matching pairs into mismatches. Upper Saddle River is
+# handled as a specific override instead (below), which can't have this
+# kind of unintended side effect on an unrelated place.
 _WORD_CANON = {"MOUNT": "MT", "MT": "MT", "SOUTH": "SO", "SO": "SO",
-               "NORTH": "NO", "HEIGHTS": "HGHTS", "HGHTS": "HGHTS"}
+               "NORTH": "NO", "HEIGHTS": "HGHTS", "HGHTS": "HGHTS",
+               "EAST": "E", "E": "E",
+               "TROY": "TR", "TR": "TR", "HILLS": "HLS", "HLS": "HLS",
+               "POINT": "PT", "PT": "PT"}
+# Remaining mismatches the general normalizer can't safely resolve, keyed on
+# (county_name, normalized TIGER name) -> mun_code. Hand-verified against
+# real rows, not a blanket fallback -- two different root causes, neither
+# fixable by extending the tables above:
+# - Caldwell / North Caldwell / Essex Fells: TIGER calls all three boroughs,
+#   but this project's own mun_name genuinely ends in "TWP" for all three --
+#   a real disagreement between the two sources about the type word itself,
+#   not an abbreviation gap. NOT safe to fix by loosening the general
+#   type-word rule -- that rule exists specifically to keep genuinely-
+#   different Boro/Twp pairs apart (Berlin Boro vs. Berlin Twp, etc.).
+# - City of Orange: word order differs ("City of Orange" vs "Orange City").
+# - Lower Alloway(s) Creek: a real spelling difference between the sources
+#   (TIGER "Alloways", MOD-IV "Alloway"), not an abbreviation.
+# - Upper Saddle River: MOD-IV abbreviates "River" to "RIV" here, but a
+#   general RIVER->RIV word rule breaks River Vale/River Edge elsewhere (see
+#   _WORD_CANON's own comment) -- a one-off override is the safe fix.
+_KNOWN_COUSUB_OVERRIDES: dict[tuple[str, str], str] = {
+    ("ESSEX", "CALDWELLBORO"): "0703",
+    ("ESSEX", "NOCALDWELLBORO"): "0715",
+    ("ESSEX", "ESSEXFELLSBORO"): "0706",
+    ("ESSEX", "CITYORANGETWP"): "0717",
+    ("SALEM", "LOWERALLOWAYSCREEKTWP"): "1705",
+    ("BERGEN", "UPPERSADDLERIVERBORO"): "0263",
+}
 
 
 def _normalize_name(name: str) -> str:
@@ -133,6 +174,16 @@ def match_cousub_to_mun_code(cousub: gpd.GeoDataFrame, mun_lookup: pd.DataFrame)
     merged = cousub.merge(mine[["county", "mun_code", "name_norm"]],
                            left_on=["county_name", "name_norm"], right_on=["county", "name_norm"],
                            how="left")
+
+    # Rescue the known cases the general normalizer can't safely resolve
+    # (see _KNOWN_COUSUB_OVERRIDES) before logging what's still unmatched.
+    still_missing = merged["mun_code"].isna()
+    for idx in merged.index[still_missing]:
+        override = _KNOWN_COUSUB_OVERRIDES.get(
+            (merged.at[idx, "county_name"], merged.at[idx, "name_norm"]))
+        if override:
+            merged.at[idx, "mun_code"] = override
+
     unmatched = merged[merged["mun_code"].isna()]
     if len(unmatched):
         print(f"  [WARN] {len(unmatched)} TIGER county-subdivision(s) did not match a mun_code "

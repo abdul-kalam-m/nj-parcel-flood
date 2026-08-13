@@ -5,6 +5,89 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Municipality-choropleth boundary gap closed, 553/564 → 564/564 (agent: sonnet-5)
+
+Owner asked for a feasibility assessment of adding a muni-level choropleth;
+turned out the layer already existed (built in guide-Phase 7, same
+`choroplethExpr`/zoom-handoff as counties) but 11 of 564 municipalities had
+no boundary polygon at all, because their name in this project's own
+MOD-IV-derived `mun_lookup` didn't match Census TIGER's name closely enough
+for `match_cousub_to_mun_code()`'s normalizer to link them. Owner asked to
+close the gap.
+
+**Done:**
+- Traced all 11 by hand (`pipeline/07_tiles.py`'s own diagnostic output),
+  not just the count -- found three distinct root causes:
+  - **6 mechanical abbreviation gaps** the existing `_TYPE_CANON`/
+    `_WORD_CANON` tables didn't cover yet: "TW"→TWP, "BOR"→BORO (South
+    Orange Village, Spring Lake Heights), "E"→East, "PT"→Point,
+    "TR"/"HLS"→Troy/Hills (East Rutherford, Pt Pleasant Beach, Parsippany
+    Tr Hls). Extended the tables.
+  - **3 cases where TIGER and MOD-IV genuinely disagree on the type word
+    itself** (Caldwell, North Caldwell, Essex Fells: TIGER calls all three
+    boroughs, this project's own `mun_name` ends in "TWP" for all three) --
+    not an abbreviation gap, and specifically **not safe to fix by loosening
+    the general type-word rule**, which exists precisely to keep genuinely-
+    different Boro/Twp pairs apart (the Berlin Boro vs. Berlin Twp bug from
+    guide-Phase 6). Added `_KNOWN_COUSUB_OVERRIDES`, a hand-verified
+    `(county, normalized_name) -> mun_code` map for exactly these
+    unresolvable-by-rule cases.
+  - **2 one-off cases**: a word-order difference ("City of Orange" vs.
+    "Orange City") and a genuine spelling difference between the two
+    sources ("Alloways" vs. "Alloway" Creek) -- both added to the same
+    override map.
+- **Caught a real regression from the first attempt, before it shipped**:
+  tried "RIVER"→"RIV" as a general `_WORD_CANON` rule (for Upper Saddle
+  River), then re-verified against the *full* live 564-muni/565-TIGER-row
+  dataset (not just the synthetic unit tests, which only covered the cases
+  being targeted) -- it broke River Vale and River Edge, whose `mun_name`
+  stores the town as one fused word ("RIVERVALE", "RIVEREDGE") rather than
+  "River" + "Vale"/"Edge"; TIGER's separate "River" token got abbreviated
+  while MOD-IV's fused token didn't, turning two previously-matching pairs
+  into mismatches. Reverted the general rule, moved Upper Saddle River to
+  the override map instead (can't have this class of side effect). Net
+  effect of testing against the full dataset rather than trusting the
+  targeted synthetic tests: caught a bug the unit tests were structurally
+  unable to see.
+- **Result, verified directly against live TIGER + this project's own
+  MOD-IV data**: 564/564 municipalities now have boundary geometry (was
+  553/564). One TIGER row still logged as unmatched ("Pine Valley
+  borough") -- checked, not a regression: Pine Valley (NJ's least-
+  populated municipality) simply has no entry in `mun_lookup` at all,
+  presumably because it has zero or near-zero MOD-IV-matched parcels to
+  derive a name from -- it was never part of the 564-mun_code universe
+  this fix (or the original 11-muni count) was ever scoped to. (Corrects a
+  guess made during the earlier feasibility assessment, that this was a
+  harmless duplicate TIGER row for an already-matched place -- checked
+  directly this time rather than repeating the assumption.)
+- Added 4 tests to `pipeline/tests/test_tiles.py` (13 total, was 9):
+  the new abbreviation coverage, the override-map rescue (all 6 cases in
+  one pass), a regression guard asserting "RIVER" stays unabbreviated
+  (River Vale/River Edge), and confirmation the override fallback doesn't
+  weaken the existing Berlin Boro/Twp distinction test. Full pipeline
+  suite: **97/97 passing**.
+- Rebuilt `boundaries.pmtiles` only (`07_tiles.py --skip-parcels`, ~2 min --
+  `parcels.pmtiles`, the 762.7MB tileset, untouched). Verified `PMTi` magic
+  bytes directly on the rebuilt file (1.79MB, up slightly from 1.77MB --
+  11 more polygons).
+
+**Decisions (§13.2):** kept the fix as dictionary extensions + a small,
+explicit override map, not a change to the general type-word-preservation
+rule -- consistent with why that rule exists in the first place (§13.2's
+own Phase-6 entry on the Berlin Boro/Twp bug).
+
+**⚠ Deviations / open items:** none new. Live browser confirmation that the
+rebuilt `boundaries.pmtiles` renders the 11 newly-added municipalities
+correctly still carries the same preview-tooling caveat as the entry above
+(pane must be actively displayed) -- not attempted again this turn since
+the fix itself is independently verified at the data/format level (full
+564/564 match confirmed directly, PMTi magic bytes confirmed directly).
+
+**Next:** unchanged -- P8 live geocoding, axe/Playwright suite (§12.2), R2
+upload, rest of guide-Phase 8.
+
+---
+
 ## 2026-08-13 — Owner decision: parcel-panel live verification accepted as sufficient (agent: sonnet-5)
 
 Retried the live browser verification flagged as an open item in the entry
