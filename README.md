@@ -40,15 +40,18 @@ Phase 1 (88.34%, below the guide's ≥97% gate).
 
 An axe/Playwright suite (§12.2 — PIN search → panel, filter cascades,
 district chart vs. summary JSON, export + disclaimer, axe scans across all
-5 views, plus checks for the new toggle and map tooltip) is implemented and
-**passing 13/13**. Running it for real has twice surfaced and fixed genuine
-bugs, not just test-authoring issues — including a real accessible-name
-defect in the filter bar, a serious axe/WCAG 4.1.2 violation in the search
-results list, and (caught via a design-review screenshot, not the test
-suite) a duplicated disclaimer on the new methodology page. A design pass
-after adding the new UI also fixed 3 real usability issues: filters that
-silently did nothing outside the map view now say so; the detail-level
-toggle is docked onto the map instead of floating next to a caption; the
+5 views, plus checks for the toggle's zoom-jump *and* its zoom-floor
+locking, and the map tooltip) is implemented and **passing 15/15**. Running
+it for real has repeatedly surfaced and fixed genuine bugs, not just
+test-authoring issues — including a real accessible-name defect in the
+filter bar, a serious axe/WCAG 4.1.2 violation in the search results list,
+(caught via a design-review screenshot, not the test suite) a duplicated
+disclaimer on the methodology page, and — most recently — real CPU-
+contention flakiness in the suite itself, fixed by capping worker
+concurrency rather than loosening an assertion. A design pass after adding
+the new UI also fixed 3 real usability issues: filters that silently did
+nothing outside the map view now say so; the detail-level toggle is docked
+onto the map instead of floating next to a caption; the
 filter bar collapses on mobile instead of pushing all content below the
 fold. See `PROGRESS.md` (2026-08-13) for full detail. R2 upload not yet
 done (needs a credentials/infra decision).

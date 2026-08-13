@@ -15,6 +15,13 @@ import type { ParcelTileProps, SearchRecord } from '../types'
 type MapLevel = 'county' | 'municipality' | 'parcel'
 const LEVEL_ZOOM: Record<MapLevel, number> = { county: 7.2, municipality: 10.5, parcel: 14 }
 const LEVEL_LABELS: Record<MapLevel, string> = { county: 'County', municipality: 'Municipality', parcel: 'Parcel' }
+// Each level's own lower zoom boundary, same numbers as the minzoom values
+// in MapCanvas.tsx. Picking a level sets this as the map's floor so
+// scrolling *out* can't cross back into a lower tier (e.g. Municipality's
+// 9 -> can't scroll down into county-only territory); scrolling *in* is
+// never restricted. County has no lower tier to guard against, so 0 (no
+// floor) is correct there.
+const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 13 }
 function levelForZoom(zoom: number): MapLevel {
   if (zoom < 9) return 'county'
   if (zoom < 13) return 'municipality'
@@ -24,7 +31,7 @@ function levelForZoom(zoom: number): MapLevel {
 export function SearchMapView() {
   const [selected, setSelected] = useState<ParcelTileProps | null>(null)
   const [flyTo, setFlyTo] = useState<{ lon: number; lat: number; zoom?: number } | null>(null)
-  const [zoomTo, setZoomTo] = useState<{ zoom: number } | null>(null)
+  const [zoomTo, setZoomTo] = useState<{ zoom: number; minZoom: number } | null>(null)
   const [zoom, setZoom] = useState(7.2)
 
   return (
@@ -44,7 +51,10 @@ export function SearchMapView() {
           <div className="relative">
             <MapCanvas onParcelClick={setSelected} flyTo={flyTo} zoomTo={zoomTo} onZoomChange={setZoom} />
             <div className="absolute left-2 top-2 z-10">
-              <MapLevelToggle level={levelForZoom(zoom)} onSelect={(l) => setZoomTo({ zoom: LEVEL_ZOOM[l] })} />
+              <MapLevelToggle
+                level={levelForZoom(zoom)}
+                onSelect={(l) => setZoomTo({ zoom: LEVEL_ZOOM[l], minZoom: LEVEL_MIN_ZOOM[l] })}
+              />
             </div>
           </div>
           <Legend />

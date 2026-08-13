@@ -38,7 +38,10 @@ export interface MapCanvasProps {
   // from `flyTo` above, which also re-centers *and* selects whatever parcel
   // ends up at the target point. Conflating the two would pop the parcel
   // panel open every time someone just wants to change zoom tiers.
-  zoomTo?: { zoom: number } | null
+  // `minZoom` is the chosen tier's own lower boundary -- once set, scrolling
+  // out can't cross back past it into a lower tier; scrolling in stays
+  // unrestricted.
+  zoomTo?: { zoom: number; minZoom: number } | null
   onZoomChange?: (zoom: number) => void
 }
 
@@ -212,6 +215,10 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo, onZoomChange }: MapCan
   useEffect(() => {
     const map = mapRef.current
     if (!zoomTo || !map) return
+    // Set the floor before moving, not after -- otherwise there's a window
+    // right after the click where an in-flight scroll could still drop
+    // below the new floor before it takes effect.
+    map.setMinZoom(zoomTo.minZoom)
     map.easeTo({ zoom: zoomTo.zoom })
   }, [zoomTo])
 

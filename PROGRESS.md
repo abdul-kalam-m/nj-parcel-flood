@@ -5,6 +5,64 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Detail-level toggle now locks its own zoom floor (agent: sonnet-5)
+
+Owner follow-up on the toggle from the entry below: picking Municipality
+should block scrolling back out to County; picking Parcel should block
+scrolling back out to Municipality; zooming in must stay unrestricted
+either way.
+
+**Done:**
+- `MapCanvas.tsx`'s `zoomTo` prop now carries `{ zoom, minZoom }`, not just
+  `zoom`. Its effect calls `map.setMinZoom(zoomTo.minZoom)` *before*
+  `map.easeTo(...)`, not after -- setting the floor first closes the window
+  where an in-flight scroll could otherwise sneak past it before the
+  restriction takes effect. MapLibre enforces `minZoom` natively on
+  scroll/drag-zoom once set, so no manual wheel-event interception needed.
+- `SearchMapView.tsx` gained `LEVEL_MIN_ZOOM = { county: 0, municipality: 9,
+  parcel: 13 }` -- the same numbers as each tier's own minzoom in
+  `MapCanvas.tsx`'s layer defs. County maps to `0` (no floor) since it's the
+  lowest tier, nothing below it to guard against. Each button click now
+  sets the floor to its *own* target tier before moving -- clicking a
+  *lower* tier (e.g. County while pinned at Parcel's floor of 13) still
+  works, because the floor is lowered first, then the camera eases down.
+- **Verified precisely, not by analogy to the toggle's earlier (button-
+  state-only) test**: this is scroll/drag-zoom behavior, a different
+  MapLibre code path than `easeTo`/`flyTo`, so it needed its own check.
+  First measured the actual per-tick zoom delta of Playwright's synthetic
+  wheel events via a temporary `window.__debugMap` hook (since removed):
+  ~0.15 zoom per 100 `deltaY` units, and confirmed the sign (`deltaY<0` =
+  zoom in, `deltaY>0` = zoom out) empirically rather than assumed. Extended
+  `map-level-toggle.spec.ts` with two new real-browser tests: picking
+  Municipality then scrolling out with a >2x safety-margin overshoot stays
+  pinned at Municipality (never drops to County), and scrolling in from
+  there still correctly crosses up into Parcel; picking Parcel then
+  scrolling out stays pinned at Parcel (never drops to Municipality). Both
+  pass.
+- **Caught and fixed real flakiness this round introduced, not just logged
+  it**: the two new tests' large tick counts (an initial, un-tuned guess of
+  40 each) added enough concurrent CPU load under Playwright's default ~8
+  parallel workers that an unrelated test (`search-by-pin.spec.ts`)
+  intermittently missed its own 5s assertion timeout -- reproduced twice,
+  confirmed to pass reliably in isolation (so not a real regression in that
+  test). Tuned the new tests' tick counts down to the minimum-plus-margin
+  actually needed per the measured zoom-per-tick rate, **and** capped
+  `playwright.config.ts`'s `workers` at 4 (was defaulting to ~8) since
+  tuning ticks alone didn't fully resolve it -- a resource-contention
+  problem, fixed as one, not papered over by loosening an assertion. Full
+  suite (now 15 tests) run 3 consecutive times after the fix: **15/15
+  every time**, noticeably faster per test too (less contention).
+- `npm run build`/`oxlint` clean throughout.
+
+**Decisions (§13.2):** none new.
+
+**⚠ Deviations / open items:** none.
+
+**Next:** R2 upload (needs owner infra decision) + production deploy;
+portfolio assets (screenshots, `CASE_STUDY.md`).
+
+---
+
 ## 2026-08-13 — Map detail-level toggle, Methodology page, map/chart tooltips, design pass (agent: sonnet-5)
 
 Owner-requested UI round: (1) a filter/button to jump the map between

@@ -10,6 +10,13 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // Capped rather than left at Playwright's default (~half the machine's
+  // cores, 8 here): running that many concurrent Chromium instances plus
+  // tile-fetching/scroll-heavy map tests caused real CPU contention that
+  // intermittently pushed unrelated tests (search-by-pin.spec.ts) past
+  // their own assertion timeouts -- a resource problem, not a logic one,
+  // so capped concurrency instead of loosening any assertion.
+  workers: 4,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: 'list',
