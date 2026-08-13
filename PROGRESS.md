@@ -5,6 +5,107 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Axe/Playwright suite (§12.2) implemented, run for real, 3 real bugs found and fixed (agent: sonnet-5)
+
+Implements §12.2's "Web checks": Playwright tests (search by PIN → panel;
+county→muni filter cascades; district chart matches summary JSON; export
+downloads with disclaimer) plus Axe accessibility scans (zero serious
+violations) across all 4 views, both in their default state and with a real
+geography/search result selected. 10 tests total. Every test targets real
+committed data (PIN `1502_49_18`, Barnegat Light Boro 029/02902, confirmed
+present in the actual search shard before the test was written; county_name
+casing and muni names taken from the real summary/geography-index JSON, not
+assumed).
+
+The first full run was 5 passed / 5 failed. Per this session's standing
+practice, each failure was root-caused properly and fixed at the source, not
+patched around — three distinct, real issues surfaced, only the first of
+which was a pure test-infra problem:
+
+**Done:**
+- **Playwright + axe-core installed and configured**: `playwright.config.ts`
+  (auto-starts/reuses the Vite dev server, `trace: 'retain-on-failure'`),
+  `web/e2e/*.spec.ts` (5 files, 10 tests), `@axe-core/playwright`. Added
+  `test:e2e`/`test:e2e:ui` npm scripts.
+- **Fixed a Node/`import.meta.env` crash before any test could run**:
+  Playwright spec files execute under plain Node, not through Vite, so
+  importing anything that touches `import.meta.env` (as `config.ts`'s
+  `DATA_BASE_URL` does) crashes on import regardless of which export is
+  actually used. Split the verbatim disclaimer text out into its own
+  `src/disclaimer.ts` (no Vite dependency), re-exported from `config.ts` for
+  app code, imported directly from `disclaimer.ts` in the export test.
+  `npm run build` re-confirmed clean after the split.
+- **Found and fixed a real accessible-name bug in `FilterBar.tsx`**: its
+  `Field` component wrapped each `<select>`/`<input>` *inside* a `<label>`
+  (implicit association) rather than pairing them by `id`/`htmlFor`. The
+  browser's accessible-name computation for an implicitly-wrapping label
+  folds in the control's own displayed text — so the County field's
+  computed name was actually `"CountyAll counties (statewide)"`, and the
+  Municipality field's was `"MunicipalitySelect a county"` (from its
+  placeholder option, *"Select a county first"*). Playwright's
+  `getByLabel('County')` — which is exactly how a screen reader user's
+  assistive tech would also resolve a labeled control — matched *both*
+  selects, because "county" (lowercase) is a substring of the Municipality
+  field's polluted name too. This wasn't a test-only quirk: it's a real
+  latent ambiguity in the form's accessible names, just one synthetic manual
+  testing had never been positioned to catch. Fixed by giving every
+  `FilterBar` control an explicit `id` and switching `Field` to
+  `<label htmlFor={id}>` as a sibling, not a wrapper — the standard, more
+  robust association pattern for exactly this reason. Confirmed
+  `MuniSearch.tsx`'s search input already used explicit `id`/`htmlFor`
+  correctly (not affected).
+- **Found and fixed a real, serious axe violation, only reachable once the
+  two issues above stopped blocking the scan from ever running against
+  populated UI state**: `axe`'s `nested-interactive` rule (WCAG 4.1.2,
+  serious) flagged `MuniSearch.tsx`'s result list — `<li role="option">`
+  wrapping a real `<button>`. The `option` role is specified to be a leaf in
+  the accessibility tree; a focusable descendant inside one is exactly the
+  "not always announced by screen readers, can cause focus problems"
+  pattern axe exists to catch. Fixed by moving `role="option"` onto the
+  `<button>` itself (a valid host, keeps native keyboard operability for
+  free) and making the wrapping `<li>` `role="presentation"` (pure layout,
+  no competing semantics) — the standard pattern for an ARIA listbox built
+  from real, natively-focusable option elements. Updated
+  `search-by-pin.spec.ts` accordingly (`result` now resolves directly to
+  the button, so it's clicked directly rather than via a nested
+  `getByRole('button')`).
+- Also fixed one test-only locator bug along the way (not an app defect): an
+  unscoped `page.getByRole('option')` in `accessibility.spec.ts` matched
+  native `<select><option>` elements too (they carry an implicit `option`
+  role even while their dropdown is closed) — those precede the search box
+  in DOM order, so an unscoped `.first()` grabbed a select option instead of
+  a search result. Scoped it to the results `listbox` by accessible name.
+- Re-ran the full suite twice consecutively after all fixes: **10/10 passing
+  both times.** `npm run build` and `oxlint` clean throughout.
+- **Notable side effect, not the point of this work but worth recording**:
+  `search-by-pin.spec.ts` runs in a real (non-preview-pane) browser and its
+  pass confirms `MapCanvas.tsx`'s full `flyTo()` → `'idle'` →
+  `queryRenderedFeatures()` → `onParcelClick()` chain completes correctly
+  end-to-end — the exact mechanism the preview-pane tooling limitation
+  (logged in the two entries above and earlier) left unconfirmed for the
+  parcel-panel and geocoding work. The geocoded-search entry point shares
+  this identical code from `onSelect` onward (per the P8 geocoding entry
+  above), so this closes that gap functionally for both entry points, even
+  though this suite's own assertions exercise it via the PIN path
+  specifically, not a geocoded candidate. The tooling limitation itself is
+  unchanged and still real for *this session's* preview pane — it just no
+  longer leaves any actual product behavior unverified.
+
+**Decisions (§13.2):** none new — no scoring, threshold, or UX judgment
+calls in this work; it's test/accessibility infrastructure plus fixes to
+defects the tests found.
+
+**⚠ Deviations / open items:** none for this work specifically. The
+preview-pane rAF/compositing limitation itself remains as documented in
+prior entries (a tooling characteristic of this session's environment, not
+a product gap) — see the "Notable side effect" note above for why it no
+longer corresponds to any unverified product behavior.
+
+**Next:** R2 upload (needs owner credentials/infra decision); rest of
+guide-Phase 8 (README, portfolio assets).
+
+---
+
 ## 2026-08-13 — P8 live address geocoding wired up (agent: sonnet-5)
 
 Closes the other guide-Phase 7 open item: §7.2's "search bar (address via

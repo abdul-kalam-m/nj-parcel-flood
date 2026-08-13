@@ -105,9 +105,17 @@ export function MuniSearch({ onSelect }: { onSelect: (r: SearchRecord) => void }
           className="absolute z-10 mt-1 max-h-72 w-full max-w-md overflow-y-auto rounded border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
         >
           {localResults.map((r) => (
-            <li key={r.pin} role="option" aria-selected={false}>
+            // role="presentation" on the <li>, role="option" on the <button>:
+            // a role="option" element is expected to be a leaf in the a11y
+            // tree, so a real focusable <button> nested inside one trips
+            // axe's "nested-interactive" (serious, WCAG 4.1.2) -- putting the
+            // option role directly on the button keeps native keyboard
+            // operability while leaving the <li> purely for list layout.
+            <li key={r.pin} role="presentation">
               <button
                 type="button"
+                role="option"
+                aria-selected={false}
                 className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 onClick={() => {
                   onSelect(r)
@@ -120,9 +128,11 @@ export function MuniSearch({ onSelect }: { onSelect: (r: SearchRecord) => void }
             </li>
           ))}
           {geoResults.map((g) => (
-            <li key={g.address} role="option" aria-selected={false}>
+            <li key={g.address} role="presentation">
               <button
                 type="button"
+                role="option"
+                aria-selected={false}
                 className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 onClick={() => {
                   onSelect({ pin: '', block: '', lot: '', qual: '', address: g.address, lon: g.lon, lat: g.lat })

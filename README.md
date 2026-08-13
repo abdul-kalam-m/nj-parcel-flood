@@ -28,17 +28,23 @@ by count and assessed value).
 
 ## Status
 
-Guide-Phase 7 (web app) built and largely closed out: search & map (incl.
-live P8 statewide address geocoding), jurisdiction summary, district
-exposure, ranked municipalities, global filters, CSV export. Municipality
-choropleth boundary coverage closed 553/564 → 564/564. `09_validate.py`
-(§12.1 QA gates) separately run for real, statewide — **6 of 7 gates
-PASS**, the one FAIL being the already-known, owner-approved join-rate
-limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate). This
-session's preview tooling intermittently fails to composite frames, which
-stalls MapLibre's animation/initial-load path without affecting anything
-else — every feature has still been verified as thoroughly as that allows
-(data/binary checks, live API calls, full event-chain tracing), with the
-residual visual-only gap logged, not hidden; owner reviewed and treated it
-as sufficient. See `PROGRESS.md` for full detail. R2 upload not yet done
-(needs a credentials/infra decision).
+Guide-Phase 7 (web app) closed out: search & map (incl. live P8 statewide
+address geocoding), jurisdiction summary, district exposure, ranked
+municipalities, global filters, CSV export. Municipality choropleth boundary
+coverage closed 553/564 → 564/564. `09_validate.py` (§12.1 QA gates)
+separately run for real, statewide — **6 of 7 gates PASS**, the one FAIL
+being the already-known, owner-approved join-rate limitation carried from
+Phase 1 (88.34%, below the guide's ≥97% gate).
+
+An axe/Playwright suite (§12.2 — PIN search → panel, filter cascades,
+district chart vs. summary JSON, export + disclaimer, axe scans across all
+4 views) is implemented and **passing 10/10**. Running it for real surfaced
+and fixed 3 genuine bugs, not just test-authoring issues — most notably a
+real accessible-name defect in the filter bar (implicit label-wrapping was
+folding a control's own option text into its computed name) and a serious
+axe/WCAG 4.1.2 violation in the search results list (an interactive button
+nested inside an ARIA `option` element). Running in a real browser, the
+suite also independently confirms the map's fly-to → parcel-panel chain
+end-to-end, closing a gap this session's preview-pane tooling had left
+unverified. See `PROGRESS.md` (2026-08-13) for full detail. R2 upload not
+yet done (needs a credentials/infra decision).

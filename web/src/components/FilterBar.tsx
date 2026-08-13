@@ -26,8 +26,9 @@ export function FilterBar() {
   return (
     <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-3 text-sm">
-        <Field label="County">
+        <Field label="County" id="county-filter">
           <select
+            id="county-filter"
             className="rounded border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800"
             value={filters.countyFips ?? ''}
             onChange={(e) =>
@@ -47,8 +48,9 @@ export function FilterBar() {
           </select>
         </Field>
 
-        <Field label="Municipality">
+        <Field label="Municipality" id="muni-filter">
           <select
+            id="muni-filter"
             className="rounded border border-zinc-300 bg-white px-2 py-1 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800"
             value={filters.muniFipsMun ?? ''}
             disabled={!selectedCounty}
@@ -63,8 +65,9 @@ export function FilterBar() {
           </select>
         </Field>
 
-        <Field label="Lens">
+        <Field label="Lens" id="lens-filter">
           <select
+            id="lens-filter"
             className="rounded border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800"
             value={filters.lens}
             onChange={(e) => setFilters((f) => ({ ...f, lens: e.target.value as typeof f.lens }))}
@@ -77,8 +80,9 @@ export function FilterBar() {
           </select>
         </Field>
 
-        <Field label="Class group">
+        <Field label="Class group" id="class-group-filter">
           <select
+            id="class-group-filter"
             className="rounded border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800"
             value={filters.classGroups[0] ?? ''}
             onChange={(e) =>
@@ -94,8 +98,9 @@ export function FilterBar() {
           </select>
         </Field>
 
-        <Field label="Band">
+        <Field label="Band" id="band-filter">
           <select
+            id="band-filter"
             className="rounded border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800"
             value={filters.bands[0] ?? ''}
             onChange={(e) =>
@@ -111,8 +116,9 @@ export function FilterBar() {
           </select>
         </Field>
 
-        <Field label={`Min overlap: ${filters.minOverlapPct}%`}>
+        <Field label={`Min overlap: ${filters.minOverlapPct}%`} id="min-overlap-filter">
           <input
+            id="min-overlap-filter"
             type="range"
             min={0}
             max={100}
@@ -124,8 +130,9 @@ export function FilterBar() {
           />
         </Field>
 
-        <Field label="Min assessed value ($)">
+        <Field label="Min assessed value ($)" id="min-assessed-value-filter">
           <input
+            id="min-assessed-value-filter"
             type="number"
             min={0}
             step={10000}
@@ -156,11 +163,20 @@ export function FilterBar() {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+// Explicit id/htmlFor association (not implicit label-wrapping): a <label> that
+// *wraps* a <select> can end up with the select's own displayed option text
+// folded into the accessible name the browser computes for it (e.g. "County"
+// becomes "CountyAll counties (statewide)"), which is enough to make
+// Playwright's getByLabel('County') ambiguously match the Municipality field
+// too, since its placeholder option reads "Select a county first". Explicit
+// association keeps each control's accessible name exactly its label text.
+function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-0.5">
-      <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{label}</span>
+    <div className="flex flex-col gap-0.5">
+      <label htmlFor={id} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+        {label}
+      </label>
       {children}
-    </label>
+    </div>
   )
 }
