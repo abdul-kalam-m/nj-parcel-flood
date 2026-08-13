@@ -5,6 +5,36 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Owner decision: parcel-panel live verification accepted as sufficient (agent: sonnet-5)
+
+Retried the live browser verification flagged as an open item in the entry
+below (parcel-click → detail panel, against the re-tiled `parcels.pmtiles`).
+The retry produced *more* diagnostic evidence, not a resolution: the
+basemap's own network-bound loading progressed further than the first
+attempt (style/sprite/source-metadata all fetched, confirmed via the
+Resource Timing API), but `boundaries.pmtiles`/`parcels.pmtiles` still
+showed zero requests even after 20+ additional seconds of waiting --
+MapLibre's `load` event still never fired. This sharpens rather than
+changes the original diagnosis: the pipeline's pure-network steps can
+complete without a composited pane, but the `load` event (which MapLibre
+only fires after an actual successful render) cannot -- consistent with
+`requestAnimationFrame` being suspended, not just throttled, for a
+non-displayed surface.
+
+**Decision (§13.2):** owner reviewed both attempts and directed: move on,
+treat the existing binary/tool-level verification (PMTiles magic bytes on
+both tilesets, `go-pmtiles convert`'s own reported tile counts with no
+errors, the earlier successful live choropleth render using the same
+integration pattern) as sufficient. Not re-litigated further. If this
+specific interaction needs live confirmation later, it needs the preview
+pane actively displayed at check time -- a session/tooling precondition,
+not something fixable from the code side.
+
+**Next:** unchanged from the entry below -- P8 live geocoding, axe/
+Playwright suite (§12.2), R2 upload, rest of guide-Phase 8.
+
+---
+
 ## 2026-08-13 — Guide-Phase 7 (§7.2): web app (agent: sonnet-5)
 
 The app itself: Vite + React 18 + TS strict + Tailwind v4 + MapLibre GL +

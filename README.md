@@ -36,6 +36,8 @@ MBTiles instead; both tilesets are now genuinely valid PMTiles. `09_validate.
 py` (§12.1 QA gates) separately run for real, statewide — **6 of 7 gates
 PASS**, the one FAIL being the already-known, owner-approved join-rate
 limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate). See
-`PROGRESS.md` for full detail, including one live-verification gap this
-session's preview tooling didn't cooperate with. R2 upload not yet done
-(needs a credentials/infra decision).
+`PROGRESS.md` for full detail, including one interaction (the parcel-click
+detail panel) where live re-verification hit a preview-tooling limitation
+twice and the owner directed treating the existing binary/tool-level
+verification as sufficient. R2 upload not yet done (needs a credentials/
+infra decision).
