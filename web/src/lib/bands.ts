@@ -32,6 +32,21 @@ export const BAND_TEXT_COLORS: Record<Band, string> = {
   severe: '#ffffff', // 8.42:1
 }
 
+// Buckets any 0-100 percentage (e.g. a geography's "% of parcels at risk")
+// into the same 5 bands as a parcel score (§5.3 cutoffs), purely so summary
+// stat cards can borrow the same, already-verified color language the map
+// and parcel panel use -- a presentation choice for visual consistency, not
+// a new aggregate-methodology figure (the guide only defines bands for a
+// single parcel's score, §13.2 -- logged as a UX decision, not a new spec
+// value).
+export function bandForPct(pct: number): Band {
+  if (pct <= 0) return 'none'
+  if (pct < 25) return 'low'
+  if (pct < 50) return 'moderate'
+  if (pct < 75) return 'high'
+  return 'severe'
+}
+
 // MapLibre paint-expression form of the same ramp, for parcel fill-color.
 export const BAND_MATCH_EXPRESSION = [
   'match', ['get', 'band'],

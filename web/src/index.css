@@ -6,6 +6,31 @@
    value throws "Could not parse color"), so JS hex literals are the single
    source of truth for both the map and the DOM, not this file. */
 
+/* Design-overhaul color system (§ owner: "UI overhaul" pass): a deep
+   teal replacing Tailwind's default blue-700 everywhere in the app chrome
+   (nav, buttons, links, focus ring). Deliberately cool, not warm -- the
+   risk-band ramp (bands.ts: yellow -> orange -> red) is the app's actual
+   data signal, so the UI's own accent color should stay out of that
+   register rather than compete with it for attention. Used as
+   bg-brand-700/text-brand-700/dark:text-brand-400 etc. via Tailwind v4's
+   CSS-first @theme, not scattered hex literals.
+   Contrast verified, not eyeballed: white-on-brand-700 = 9.0:1 (AA/AAA),
+   brand-700-on-white = 9.0:1 (same pair), brand-400-on-zinc-950 = 6.0:1
+   (AA) -- all comfortably clear 4.5:1 for normal text. */
+@theme {
+  --color-brand-50: #eff6f7;
+  --color-brand-100: #d7e9ec;
+  --color-brand-200: #b0d3d9;
+  --color-brand-300: #7fb8c2;
+  --color-brand-400: #4f97a6;
+  --color-brand-500: #337c8c;
+  --color-brand-600: #246373;
+  --color-brand-700: #1c4f5c;
+  --color-brand-800: #17414c;
+  --color-brand-900: #143540;
+  --color-brand-950: #0a1e24;
+}
+
 :root {
   color-scheme: light dark;
 }
@@ -22,14 +47,20 @@ body {
 /* Visible keyboard-focus ring everywhere -- WCAG 2.2 AA needs a real focus
    indicator, not just the (often invisible) browser default. */
 :focus-visible {
-  outline: 3px solid #1d4ed8;
+  outline: 3px solid #1c4f5c; /* brand-700 -- kept as a literal since :focus-visible sits outside Tailwind's utility layer */
   outline-offset: 2px;
 }
 
-/* MapLibre's default Popup (used for the map hover tooltip) is a plain
-   white box with no dark-mode awareness of its own -- this app's dark
-   theme follows prefers-color-scheme everywhere else, so match it here too
-   rather than leave a jarring white card on a dark page. */
+/* MapLibre's default Popup (map hover tooltip) ships its own 3px corner
+   radius -- bumped to match this app's rounded-lg (8px) system everywhere
+   else, not left as a mismatched default. */
+.maplibregl-popup-content {
+  border-radius: 8px;
+}
+
+/* Plain white box with no dark-mode awareness of its own -- this app's
+   dark theme follows prefers-color-scheme everywhere else, so match it
+   here too rather than leave a jarring white card on a dark page. */
 @media (prefers-color-scheme: dark) {
   .maplibregl-popup-content {
     background: #27272a;

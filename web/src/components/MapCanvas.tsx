@@ -227,7 +227,10 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo, onZoomChange }: MapCan
       ref={containerRef}
       role="application"
       aria-label="Statewide flood risk map"
-      className="h-[70vh] w-full rounded border border-zinc-200 dark:border-zinc-800"
+      // overflow-hidden, not just rounded-lg: without it the border curves
+      // but the map canvas underneath stays rectangular, poking past the
+      // rounded corners.
+      className="h-[70vh] w-full overflow-hidden rounded-lg border border-zinc-200 shadow-sm dark:border-zinc-800 dark:shadow-none"
     />
   )
 }

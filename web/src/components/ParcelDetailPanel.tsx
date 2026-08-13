@@ -11,11 +11,16 @@ export function ParcelDetailPanel({ parcel, onClose }: { parcel: ParcelTileProps
   return (
     <aside
       aria-label="Parcel detail"
-      className="w-full max-w-sm shrink-0 overflow-y-auto rounded border border-zinc-200 p-4 dark:border-zinc-800"
+      className="w-full max-w-sm shrink-0 overflow-y-auto rounded-lg border border-zinc-200 p-4 shadow-sm dark:border-zinc-800 dark:shadow-none"
     >
       <div className="mb-2 flex items-start justify-between">
         <h3 className="text-sm font-semibold text-zinc-500">Parcel {parcel.pin}</h3>
-        <button type="button" onClick={onClose} aria-label="Close parcel detail" className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close parcel detail"
+          className="rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+        >
           ✕
         </button>
       </div>
@@ -27,7 +32,7 @@ export function ParcelDetailPanel({ parcel, onClose }: { parcel: ParcelTileProps
       </p>
 
       <div
-        className="mb-3 flex items-center justify-between rounded p-3"
+        className="mb-3 flex items-center justify-between rounded-lg p-3"
         style={{ background: BAND_COLORS[parcel.band], color: BAND_TEXT_COLORS[parcel.band] }}
       >
         <span className="text-sm font-medium">Risk band: {BAND_LABELS[parcel.band]}</span>

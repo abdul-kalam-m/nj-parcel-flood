@@ -73,15 +73,15 @@ export function DistrictExposureView() {
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">District exposure — {label}</h2>
+        <h2 className="text-2xl font-bold tracking-tight">District exposure — {label}</h2>
         <div className="flex items-center gap-3">
-          <div role="group" aria-label="Metric" className="flex overflow-hidden rounded border border-zinc-300 dark:border-zinc-700">
+          <div role="group" aria-label="Metric" className="flex overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-700">
             {(['count', 'value'] as Metric[]).map((m) => (
               <button
                 key={m}
                 type="button"
                 aria-pressed={metric === m}
-                className={`px-3 py-1 text-sm ${metric === m ? 'bg-blue-700 text-white' : 'bg-white dark:bg-zinc-800'}`}
+                className={`px-3 py-1 text-sm transition-colors ${metric === m ? 'bg-brand-700 text-white' : 'bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700'}`}
                 onClick={() => setMetric(m)}
               >
                 {m === 'count' ? '% of parcels' : '% of value'}
@@ -90,7 +90,7 @@ export function DistrictExposureView() {
           </div>
           <button
             type="button"
-            className="rounded border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             onClick={() =>
               downloadCsv(
                 `district-exposure-${label.replace(/\s+/g, '_')}.csv`,
@@ -128,7 +128,7 @@ export function DistrictExposureView() {
           return (
             <g key={r.classGroup}>
               <rect
-                x={x} y={chartH - curH} width={barW} height={curH} fill="#1d4ed8"
+                x={x} y={chartH - curH} width={barW} height={curH} fill="#246373" rx={2}
                 onMouseEnter={() =>
                   setHover({
                     x: x + barW / 2, y: chartH - curH,
@@ -141,7 +141,7 @@ export function DistrictExposureView() {
                 <title>{`${r.classGroup} · current: ${r.current.toFixed(1)}%`}</title>
               </rect>
               <rect
-                x={x + barW + 4} y={chartH - futH} width={barW} height={futH} fill="#f97316"
+                x={x + barW + 4} y={chartH - futH} width={barW} height={futH} fill="#f97316" rx={2}
                 onMouseEnter={() =>
                   setHover({
                     x: x + barW + 4 + barW / 2, y: chartH - futH,
@@ -160,7 +160,7 @@ export function DistrictExposureView() {
           )
         })}
         <g transform={`translate(40, ${chartH + 34})`} fontSize={10} fill="currentColor">
-          <rect width={10} height={10} fill="#1d4ed8" />
+          <rect width={10} height={10} fill="#246373" rx={2} />
           <text x={14} y={9}>Current</text>
           <rect x={80} width={10} height={10} fill="#f97316" />
           <text x={94} y={9}>Future</text>
@@ -183,11 +183,14 @@ export function DistrictExposureView() {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.classGroup} className="border-b border-zinc-100 dark:border-zinc-800">
-              <td className="py-1 pr-4">{r.classGroup}</td>
-              <td className="py-1 pr-4 text-right tabular-nums">{r.current.toFixed(1)}%</td>
-              <td className="py-1 pr-4 text-right tabular-nums">{r.future.toFixed(1)}%</td>
-              <td className="py-1 pr-4 text-right tabular-nums">{r.currentCell?.parcel_count ?? 0}</td>
+            <tr
+              key={r.classGroup}
+              className="border-b border-zinc-100 odd:bg-zinc-50/70 hover:bg-brand-50 dark:border-zinc-800 dark:odd:bg-zinc-900/40 dark:hover:bg-zinc-800"
+            >
+              <td className="py-1.5 pr-4">{r.classGroup}</td>
+              <td className="py-1.5 pr-4 text-right tabular-nums">{r.current.toFixed(1)}%</td>
+              <td className="py-1.5 pr-4 text-right tabular-nums">{r.future.toFixed(1)}%</td>
+              <td className="py-1.5 pr-4 text-right tabular-nums">{r.currentCell?.parcel_count ?? 0}</td>
             </tr>
           ))}
         </tbody>

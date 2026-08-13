@@ -5,6 +5,99 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Full visual overhaul: real color/type/elevation system (agent: sonnet-5)
+
+Owner: "Push it to Claude Design to give this dashboard a UI Overhaul" —
+explicitly a bigger ask than the earlier design-critique pass (which fixed
+3 targeted usability issues, PROGRESS.md 2026-08-13 "Map detail-level
+toggle..."). Ran `design:design-critique` again with that framing, got an
+ambitious critique, and executed a real visual pass, not incremental nits.
+
+**Critique's core findings**: zero color identity (every accent was
+literally Tailwind's default `blue-700`, unmodified); everything flat, no
+elevation anywhere; almost no type scale outside the stat-card numbers; the
+risk-band ramp (the app's best visual asset) only appeared on the map,
+never in the summary/ranked views.
+
+**Done:**
+- **Real color system**: a custom `brand` teal scale (`--color-brand-50`
+  through `-950`) defined via Tailwind v4's `@theme` in `index.css`,
+  replacing every `blue-700`/`blue-900`/`blue-400`/`#1d4ed8` reference
+  app-wide (nav, buttons, links, focus ring, chart "Current" series).
+  Deliberately cool, not warm -- the risk-band ramp (yellow→orange→red) is
+  the actual data signal, so the UI's own chrome color stays out of that
+  register on purpose, not by accident. **Contrast computed, not
+  eyeballed**, same discipline as the existing `bands.ts` comments: white
+  on brand-700 = 9.0:1, brand-700 on white = 9.0:1 (same pair), brand-400
+  on zinc-950 (dark-mode text) = 6.0:1 -- all comfortably clear the 4.5:1
+  AA floor. Confirmed for real afterward: the full axe suite (still 15/15)
+  found zero new contrast violations from the swap.
+- **Elevation**: `shadow-sm`/`shadow-md` + `rounded-lg` (was flat 1px
+  borders + `rounded` everywhere) on the map, parcel panel, stat cards,
+  Methodology's score-component cards, plus `hover:shadow-md` lift on
+  interactive cards. `overflow-hidden` added where a rounded container's
+  content (map canvas, search dropdown) wasn't actually being clipped to
+  match its own rounded corners -- previously just a rounded border
+  outline over square content.
+- **Type scale**: page titles bumped `text-xl font-semibold` →
+  `text-2xl font-bold tracking-tight`; stat-card values `text-2xl` →
+  `text-3xl`, labels made uppercase/tracked for eyebrow-label contrast;
+  Methodology's section headers get a teal bottom-border accent instead of
+  plain bold text.
+- **Risk-band ramp reused beyond the map**, not just left underused:
+  - Added `bandForPct()` to `lib/bands.ts` -- buckets any 0-100 percentage
+    into the same 5 bands as a parcel score, so a geography's "% at risk"
+    can borrow the same, already-contrast-verified color language a
+    parcel's own band does. **Explicitly logged as a presentation-only
+    reuse of the §5.3 cutoffs for a different (aggregate, not per-parcel)
+    figure, not a new methodology value** -- the guide only defines bands
+    for a single parcel's score.
+  - Jurisdiction Summary's "% at risk" and "Value exposure %" cards get a
+    colored left-border accent from `bandForPct()`; text stays neutral for
+    readability, only the accent carries severity.
+  - Ranked Municipalities' 20+ row table gets a small severity dot per row
+    (bordered, since the "none" band's `#f7f7f7` would otherwise be
+    invisible against a white/zebra row) -- scannable at a glance instead
+    of reading every number.
+  - Methodology's band-cutoff table gets the same swatches next to each
+    band name.
+- **Control-language consistency**: `FilterBar.tsx`'s five near-identical
+  `<select>` class strings collapsed into one shared `SELECT_CLASS`
+  constant -- a real design-system move, not just recoloring, since it
+  guarantees every select looks and behaves identically rather than
+  "identically by coincidence" from copy-paste.
+- **Table polish**: zebra striping + hover-row highlight added to Ranked
+  Municipalities, District Exposure, and Methodology's two data tables
+  (previously bare `border-b` dividers only).
+- **Header**: added an original inline-SVG droplet mark (generic
+  water-themed glyph, not a copy of any existing brand/logo) next to the
+  wordmark; nav pills switched to `rounded-full`; header made `sticky` so
+  the filter bar stays reachable on long pages (Methodology, a 20+ row
+  ranked table) -- caught and fixed the one regression this introduced
+  before it shipped: the search-results dropdown was `z-10`, the new
+  sticky header is `z-20`, so results could have rendered underneath it if
+  the page was scrolled with the dropdown open; bumped the dropdown to
+  `z-30`.
+- **Caught via the "before" screenshots themselves** (same pattern as the
+  last design pass): none this round needed fixing before shipping --
+  worth noting because the *previous* pass did catch a real bug this way,
+  so it's an established, working part of the workflow now, not a one-off.
+- Re-ran the full Playwright/axe suite (unchanged file count, 15 tests)
+  twice after all changes: **15/15 both times**. `npm run build`/`oxlint`
+  clean throughout.
+
+**Decisions (§13.2):** the `brand` teal hue and `bandForPct()`'s reuse of
+the parcel-score cutoffs for aggregate percentages are both presentation
+judgment calls, not new methodology or spec values -- logged as such, not
+silently presented as if the guide specifies them.
+
+**⚠ Deviations / open items:** none.
+
+**Next:** R2 upload (needs owner infra decision) + production deploy;
+portfolio assets (screenshots, `CASE_STUDY.md`).
+
+---
+
 ## 2026-08-13 — Detail-level toggle now locks its own zoom floor (agent: sonnet-5)
 
 Owner follow-up on the toggle from the entry below: picking Municipality

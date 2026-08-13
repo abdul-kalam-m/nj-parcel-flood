@@ -41,17 +41,25 @@ Phase 1 (88.34%, below the guide's ≥97% gate).
 An axe/Playwright suite (§12.2 — PIN search → panel, filter cascades,
 district chart vs. summary JSON, export + disclaimer, axe scans across all
 5 views, plus checks for the toggle's zoom-jump *and* its zoom-floor
-locking, and the map tooltip) is implemented and **passing 15/15**. Running
-it for real has repeatedly surfaced and fixed genuine bugs, not just
-test-authoring issues — including a real accessible-name defect in the
-filter bar, a serious axe/WCAG 4.1.2 violation in the search results list,
-(caught via a design-review screenshot, not the test suite) a duplicated
-disclaimer on the methodology page, and — most recently — real CPU-
-contention flakiness in the suite itself, fixed by capping worker
-concurrency rather than loosening an assertion. A design pass after adding
-the new UI also fixed 3 real usability issues: filters that silently did
-nothing outside the map view now say so; the detail-level toggle is docked
-onto the map instead of floating next to a caption; the
-filter bar collapses on mobile instead of pushing all content below the
-fold. See `PROGRESS.md` (2026-08-13) for full detail. R2 upload not yet
-done (needs a credentials/infra decision).
+locking, and the map tooltip) is implemented and **passing 15/15**, run
+repeatedly for stability. Running it for real has repeatedly surfaced and
+fixed genuine bugs, not just test-authoring issues — a real accessible-name
+defect in the filter bar, a serious axe/WCAG 4.1.2 violation, a duplicated
+disclaimer caught via a design-review screenshot, and real CPU-contention
+flakiness in the suite itself (fixed by capping worker concurrency, not by
+loosening an assertion).
+
+The UI has been through two design passes now, both via
+`design:design-critique` against real-browser screenshots (this session's
+preview pane can't reliably screenshot or verify MapLibre animations, so
+Playwright's real browser does both jobs). The first fixed targeted
+usability issues (filters that silently did nothing off the map view, the
+detail-level toggle not reading as a map control, mobile filter-bar
+length). The second, at the owner's explicit request for a full "UI
+overhaul," went further: a real color system (a custom teal `brand` scale
+replacing Tailwind's default blue everywhere, contrast-verified and
+axe-confirmed), elevation (shadows + rounded corners instead of flat 1px
+borders), a real type scale, and the risk-band color ramp reused in stat
+cards and tables instead of only appearing on the map. See `PROGRESS.md`
+(2026-08-13, several entries) for full detail. R2 upload not yet done
+(needs a credentials/infra decision).

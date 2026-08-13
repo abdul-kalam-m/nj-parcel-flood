@@ -3,6 +3,7 @@ import { useFilters } from '../context/useFilters'
 import { fetchGeographyIndex, fetchMuniSummary, fetchRankedMunicipalities } from '../lib/data'
 import type { CountyIndexEntry, GeographyIndex, RankedMuniEntry } from '../types'
 import { downloadCsv } from '../lib/csv'
+import { bandForPct, BAND_COLORS } from '../lib/bands'
 
 type SortKey = 'pct_at_risk' | 'value_at_risk'
 
@@ -58,7 +59,7 @@ export function RankedMunicipalitiesView() {
   if (!filters.countyFips) {
     return (
       <section>
-        <h2 className="mb-2 text-xl font-semibold">Ranked municipalities</h2>
+        <h2 className="mb-2 text-2xl font-bold tracking-tight">Ranked municipalities</h2>
         <p className="text-zinc-600 dark:text-zinc-400">
           Select a county in the filter bar above to see its municipalities ranked by % at risk and
           value at risk.
@@ -74,14 +75,14 @@ export function RankedMunicipalitiesView() {
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">
-          Ranked municipalities — {county?.name} ({filters.lens} risk)
+        <h2 className="text-2xl font-bold tracking-tight">
+          Ranked municipalities — {county?.name} <span className="font-medium text-zinc-500">({filters.lens} risk)</span>
         </h2>
         <div className="flex items-center gap-2">
           <label className="text-sm">
             Sort by{' '}
             <select
-              className="rounded border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800"
+              className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 dark:border-zinc-700 dark:bg-zinc-800"
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
             >
@@ -91,7 +92,7 @@ export function RankedMunicipalitiesView() {
           </label>
           <button
             type="button"
-            className="rounded border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             onClick={() =>
               downloadCsv(
                 `ranked-munis-${county?.name}.csv`,
@@ -106,28 +107,43 @@ export function RankedMunicipalitiesView() {
           </button>
         </div>
       </div>
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-zinc-300 text-left dark:border-zinc-700">
-            <th scope="col" className="py-1 pr-4">Rank</th>
-            <th scope="col" className="py-1 pr-4">Municipality</th>
-            <th scope="col" className="py-1 pr-4 text-right">Parcels</th>
-            <th scope="col" className="py-1 pr-4 text-right">% at risk</th>
-            <th scope="col" className="py-1 pr-4 text-right">Value at risk</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((r, i) => (
-            <tr key={r.fips_mun} className="border-b border-zinc-100 dark:border-zinc-800">
-              <td className="py-1 pr-4 tabular-nums">{i + 1}</td>
-              <td className="py-1 pr-4">{r.name}</td>
-              <td className="py-1 pr-4 text-right tabular-nums">{r.parcel_count.toLocaleString()}</td>
-              <td className="py-1 pr-4 text-right tabular-nums">{r.pct_at_risk.toFixed(1)}%</td>
-              <td className="py-1 pr-4 text-right tabular-nums">{fmtUsd.format(r.value_at_risk)}</td>
+      <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-zinc-300 bg-zinc-50 text-left font-semibold dark:border-zinc-700 dark:bg-zinc-900">
+              <th scope="col" className="py-2 pl-4 pr-4">Rank</th>
+              <th scope="col" className="py-2 pr-4">Municipality</th>
+              <th scope="col" className="py-2 pr-4 text-right">Parcels</th>
+              <th scope="col" className="py-2 pr-4 text-right">% at risk</th>
+              <th scope="col" className="py-2 pr-4 text-right">Value at risk</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sorted.map((r, i) => (
+              <tr
+                key={r.fips_mun}
+                className="border-b border-zinc-100 odd:bg-zinc-50/70 hover:bg-brand-50 last:border-b-0 dark:border-zinc-800 dark:odd:bg-zinc-900/40 dark:hover:bg-zinc-800"
+              >
+                <td className="py-1.5 pl-4 pr-4 tabular-nums text-zinc-500">{i + 1}</td>
+                <td className="py-1.5 pr-4 font-medium">{r.name}</td>
+                <td className="py-1.5 pr-4 text-right tabular-nums">{r.parcel_count.toLocaleString()}</td>
+                <td className="py-1.5 pr-4 text-right tabular-nums">
+                  {/* border, not just a fill: "none" band's color (#f7f7f7)
+                      would otherwise be near-invisible against a white/
+                      zebra-striped row. */}
+                  <span
+                    className="mr-1.5 inline-block h-2 w-2 rounded-full border border-black/15 align-middle"
+                    style={{ background: BAND_COLORS[bandForPct(r.pct_at_risk)] }}
+                    aria-hidden="true"
+                  />
+                  {r.pct_at_risk.toFixed(1)}%
+                </td>
+                <td className="py-1.5 pr-4 text-right tabular-nums">{fmtUsd.format(r.value_at_risk)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }

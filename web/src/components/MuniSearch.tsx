@@ -87,7 +87,7 @@ export function MuniSearch({ onSelect }: { onSelect: (r: SearchRecord) => void }
               : 'Loading parcels…'
             : 'Search any NJ address (pick a county + municipality too for PIN/block-lot search)'
         }
-        className="w-full max-w-md rounded border border-zinc-300 px-3 py-1.5 dark:border-zinc-700 dark:bg-zinc-800"
+        className="w-full max-w-md rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
         role="combobox"
         aria-expanded={hasResults}
         aria-controls="search-results"
@@ -102,7 +102,10 @@ export function MuniSearch({ onSelect }: { onSelect: (r: SearchRecord) => void }
           id="search-results"
           role="listbox"
           aria-label="Search results"
-          className="absolute z-10 mt-1 max-h-72 w-full max-w-md overflow-y-auto rounded border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
+          // z-30, not z-10: Layout's header is now sticky at z-20, so this
+          // needs to clear it or results could render underneath if the
+          // page is scrolled while the dropdown is open.
+          className="absolute z-30 mt-1 max-h-72 w-full max-w-md overflow-y-auto overflow-x-hidden rounded-lg border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
         >
           {localResults.map((r) => (
             // role="presentation" on the <li>, role="option" on the <button>:
@@ -116,7 +119,7 @@ export function MuniSearch({ onSelect }: { onSelect: (r: SearchRecord) => void }
                 type="button"
                 role="option"
                 aria-selected={false}
-                className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                className="block w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-brand-50 dark:hover:bg-zinc-700"
                 onClick={() => {
                   onSelect(r)
                   clearSearch()
@@ -133,7 +136,7 @@ export function MuniSearch({ onSelect }: { onSelect: (r: SearchRecord) => void }
                 type="button"
                 role="option"
                 aria-selected={false}
-                className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                className="block w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-brand-50 dark:hover:bg-zinc-700"
                 onClick={() => {
                   onSelect({ pin: '', block: '', lot: '', qual: '', address: g.address, lon: g.lon, lat: g.lat })
                   clearSearch()

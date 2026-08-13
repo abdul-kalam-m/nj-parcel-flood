@@ -67,12 +67,12 @@ export function SearchMapView() {
 
 function MapLevelToggle({ level, onSelect }: { level: MapLevel; onSelect: (l: MapLevel) => void }) {
   return (
-    <div className="flex items-center gap-1.5 rounded bg-white/90 px-1.5 py-1 text-xs shadow backdrop-blur-sm dark:bg-zinc-900/90">
+    <div className="flex items-center gap-1.5 rounded-lg bg-white/90 px-1.5 py-1 text-xs shadow-md backdrop-blur-sm dark:bg-zinc-900/90">
       <span className="pl-0.5 font-medium text-zinc-500 dark:text-zinc-400">Zoom to:</span>
       <div
         role="group"
         aria-label="Map detail level"
-        className="flex overflow-hidden rounded border border-zinc-300 dark:border-zinc-700"
+        className="flex overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700"
       >
         {(['county', 'municipality', 'parcel'] as MapLevel[]).map((l) => (
           <button
@@ -80,8 +80,8 @@ function MapLevelToggle({ level, onSelect }: { level: MapLevel; onSelect: (l: Ma
             type="button"
             aria-pressed={level === l}
             title={`Jump to ${LEVEL_LABELS[l].toLowerCase()}-level zoom`}
-            className={`px-2 py-1 font-medium ${
-              level === l ? 'bg-blue-700 text-white' : 'bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700'
+            className={`px-2 py-1 font-medium transition-colors ${
+              level === l ? 'bg-brand-700 text-white' : 'bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700'
             }`}
             onClick={() => onSelect(l)}
           >
