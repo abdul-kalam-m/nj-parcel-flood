@@ -28,10 +28,9 @@ by count and assessed value).
 
 ## Status
 
-Guide-Phase 6 (tiles + search index, §11) done, statewide — `parcels.pmtiles`
-(461MB, budget ≤4GB), `boundaries.pmtiles`, and all 564 municipality search
-shards built; the guide's own "20 test lookups resolve" gate passed 20/20.
-R2 upload not yet done (needs a credentials/infra decision). Guide-Phase 7
-(web app) or 8 (`09_validate.py`) next. Known limitation carried from Phase 1,
-owner-approved: statewide MOD-IV join rate is 88.34%, below the guide's ≥97%
-gate. See `PROGRESS.md`.
+`09_validate.py` (§12.1 QA gates) run for real, statewide — **6 of 7 gates
+PASS**. The one FAIL is the already-known, owner-approved join-rate
+limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate),
+formally confirmed rather than newly found. See `PROGRESS.md` and
+`VALIDATION_REPORT.md`. Guide-Phase 7 (web app) is still undone; R2 upload
+also not yet done (needs a credentials/infra decision).

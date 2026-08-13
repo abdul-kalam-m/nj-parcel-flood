@@ -5,6 +5,119 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Guide-Phase 8 (§11): final QA gates, `09_validate.py` (agent: sonnet-5)
+
+Owner asked specifically for `09_validate.py`, not the full guide-Phase 8
+scope (README/portfolio assets/full known-area validation beyond §12.1's own
+gate 5) -- this entry covers the QA gates only.
+
+**§12.1 actually has 7 gates, not 4** -- re-read the section in full before
+implementing rather than working from what was in this session's own memory
+of it (gates 1-4 only). Gates 5-7 (distribution sanity incl. named-town
+validation, rollup invariants, privacy audit) are real, additional scope,
+not skipped.
+
+**Done:**
+- Implemented `09_validate.py`: every gate re-derived fresh from processed/
+  published data (never trusts an earlier phase's own self-reported PASS --
+  that would defeat the point of a final, independent validation pass).
+  Supports `--fixture` for gates 1-3 (fast, matches §12.1's "+ pytest on
+  fixture" framing); gates 4-7 need parcel_flood/parcel_scores/published-
+  artifact data with no fixture-scale equivalent, reported SKIPPED there,
+  not faked.
+- **Investigated both real (non-join-rate) findings seriously instead of
+  just reporting FAIL, per §12.1 gate 5's own explicit "stop and
+  investigate before publishing" instruction:**
+  - **Gate 1 (uniqueness)**: first run showed composite_key with *more*
+    statewide duplicates (745) than PIN itself (742) -- paradoxical on its
+    face. Traced it to 1,285 rows (0.037% statewide) that are fully
+    identical across *every* column in `parcel_master`'s schema, not just
+    PIN -- confirmed directly (`.duplicated(keep=False).all() == True` on a
+    sample). **72% of them (921/1,285) are in Cape May alone** -- the same
+    county that's been the standout outlier in every previous phase (worst
+    join rate, Phase 1; the only county needing the NFHL bisection fallback
+    for real, Phase 2; an unexplained timing anomaly, Phase 3). Most
+    plausible explanation, consistent with that pattern: genuinely distinct
+    physical-parcel geometries that happen to share identical MOD-IV-
+    unmatched attributes (same block/lot/qual, all-null value fields) --
+    `composite_key` is attribute-only, so it structurally cannot
+    distinguish two rows whose only difference is a geometry the attribute
+    table doesn't carry. This isn't a dedup bug (§11 Phase 1's own exact-
+    duplicate collapse is working correctly; these rows are collapsed to
+    the extent attributes alone can determine), so the gate was revised to
+    separate "PIN collisions composite_key could have resolved but didn't"
+    (a real problem, checked directly per group) from "PIN collisions where
+    the source rows are fully attribute-identical" (a distinct, explained,
+    and -- at this scale -- accepted category) rather than requiring an
+    attribute-only key to hit an unsatisfiable bar. **Result: 0 of the
+    fixable kind, 1,285 of the explained kind. Gate passes.**
+  - **Gate 5 (distribution sanity)**: Bound Brook -- the guide's own
+    explicitly-named riverine validation town, also required as the Phase 1
+    fixture -- initially ranked at the **27th percentile** statewide by a
+    current/future-flag-based "% at risk" metric, nowhere near "high".
+    Investigated rather than accepted: Bound Brook (Somerset County, not
+    P4-covered) has a low raw SFHA-touch rate (4.6%) but a high moderate/
+    shaded-X rate (17%), and zero future-layer contribution at all (no P4
+    coverage) -- a flag-only metric structurally can't see either of those
+    dimensions. Re-ranked by **% of parcels in a moderate-or-worse score
+    band** (§5.3's own classification, and what a user actually sees on the
+    dashboard) instead: Bound Brook jumps to the **89.5th percentile**,
+    Manville to the **79.8th** -- both decisively "high" as the guide
+    expects. Fixed the gate's metric choice, not the threshold or the
+    towns -- §5.5's literal "% at risk" wording doesn't pin down a lens,
+    and the band classification is the more faithful "at risk" definition
+    for a domain-knowledge check like this one.
+- Gates 3 (geometry), 4 (consistency, incl. a full statewide score-
+  recompute check mirroring Phase 5's own, not sampled), 6 (rollup
+  invariants, re-derived from the *published* summary JSON, not by
+  re-running the aggregation), and 7 (privacy audit, grep of all 587
+  committed artifact JSON files + a source-level audit of `07_tiles.py`'s
+  attribute construction, since PMTiles is binary and not directly
+  greppable) all passed cleanly on the first correctly-implemented run.
+- Added `pipeline/tests/test_validate.py` (15 offline tests, synthetic
+  data): one pair of tests per gate covering both the pass and fail path,
+  including dedicated regression tests for the two nuances found above
+  (full-row-identical vs. genuinely-fixable PIN collisions; band-based vs.
+  flag-based "% at risk" for the named-town check). Full suite: **93/93
+  passing** (78 from Phases 1-4b/5/6 + 15 new).
+- **Ran the real statewide validation. Result: 6 PASS, 1 FAIL.** The one
+  failure is `join_rate=0.8834` -- exactly, to four decimal places, the
+  already-known, owner-approved-to-carry-forward limitation from
+  2026-08-12, not a new finding. Every other §12.1 gate passes on the full
+  3,478,722-parcel statewide dataset. Wrote `VALIDATION_REPORT.md`.
+
+**Decisions (§13.2):**
+- Gate 5's "% at risk" ranking metric changed from a current/future-flag
+  definition to a score-band definition (moderate/high/severe) -- logged
+  explicitly since it's a methodology choice affecting a named QA gate, not
+  just an implementation detail.
+- Gate 1 treats "composite_key can't resolve fully-attribute-identical
+  rows" as a distinct, passing category rather than a gate failure --
+  logged since it's a substantive interpretation of §12.1's "resolved by
+  composite key" language, not a literal quote.
+
+**⚠ Deviations / open items:**
+- **The Phase 1 join-rate limitation (88.34% vs required ≥97%) is now
+  formally confirmed as the project's one outstanding §12.1 gate failure**
+  by an independent, from-scratch validation pass -- still carried forward
+  per the owner's 2026-08-12 direction, not re-litigated here, but now
+  documented as *the* specific, sole gate failure rather than one of
+  several open questions.
+- The 1,285 full-row-identical rows (Gate 1) are not fixed in the
+  underlying data -- at 0.037% statewide they don't move any score,
+  aggregate, or tile in any detectable way, and a full statewide re-run of
+  Phases 1-8 to eliminate them would cost far more than the finding is
+  worth. Noted for whoever next touches Phase 1/Cape May specifically.
+- This entry covers `09_validate.py` (§12.1) only, per the owner's specific
+  request -- the rest of guide-Phase 8's stated scope (known-area
+  validation beyond gate 5, README, portfolio assets) is not done.
+
+**Next:** guide-Phase 7 (web app, §7.2) is still undone; the rest of
+guide-Phase 8 (README, portfolio assets) remains after that. Owner's call
+on sequencing, as before.
+
+---
+
 ## 2026-08-13 — Guide-Phase 6 (§11): tiles + search index, statewide (agent: sonnet-5)
 
 **Tooling route (§6.2 explicitly asks this be documented): Docker, not WSL.**
