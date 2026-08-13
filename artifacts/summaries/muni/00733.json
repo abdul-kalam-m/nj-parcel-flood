@@ -1,0 +1,118 @@
+{
+  "current": {
+    "Residential": {
+      "parcel_count": 3,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 7921600.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Commercial": {
+      "parcel_count": 1,
+      "at_risk_count": 1,
+      "pct_at_risk": 100.0,
+      "total_assessed_value": 17990500.0,
+      "value_at_risk_presence": 17990500.0,
+      "value_at_risk_overlap": 2725933.25,
+      "value_exposure_pct": 100.0
+    },
+    "Other": {
+      "parcel_count": 1,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "ALL": {
+      "parcel_count": 5,
+      "at_risk_count": 1,
+      "pct_at_risk": 20.0,
+      "total_assessed_value": 25912100.0,
+      "value_at_risk_presence": 17990500.0,
+      "value_at_risk_overlap": 2725933.25,
+      "value_exposure_pct": 69.429
+    }
+  },
+  "future": {
+    "Residential": {
+      "parcel_count": 3,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 7921600.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Commercial": {
+      "parcel_count": 1,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 17990500.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Other": {
+      "parcel_count": 1,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "ALL": {
+      "parcel_count": 5,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 25912100.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    }
+  },
+  "either": {
+    "Commercial": {
+      "parcel_count": 1,
+      "at_risk_count": 1,
+      "pct_at_risk": 100.0,
+      "total_assessed_value": 17990500.0,
+      "value_at_risk_presence": 17990500.0,
+      "value_at_risk_overlap": 2725933.25,
+      "value_exposure_pct": 100.0
+    },
+    "Residential": {
+      "parcel_count": 3,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 7921600.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Other": {
+      "parcel_count": 1,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "ALL": {
+      "parcel_count": 5,
+      "at_risk_count": 1,
+      "pct_at_risk": 20.0,
+      "total_assessed_value": 25912100.0,
+      "value_at_risk_presence": 17990500.0,
+      "value_at_risk_overlap": 2725933.25,
+      "value_exposure_pct": 69.429
+    }
+  },
+  "mun_name": "TAVISTOCK BORO",
+  "county_name": "CAMDEN"
+}

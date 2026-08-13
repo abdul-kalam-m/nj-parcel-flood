@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Residential": {
+      "parcel_count": 18102,
+      "at_risk_count": 1058,
+      "pct_at_risk": 5.845,
+      "total_assessed_value": 3974827967.0,
+      "value_at_risk_presence": 280255740.0,
+      "value_at_risk_overlap": 168116726.73,
+      "value_exposure_pct": 7.051
+    },
+    "Commercial": {
+      "parcel_count": 3278,
+      "at_risk_count": 360,
+      "pct_at_risk": 10.982,
+      "total_assessed_value": 1298276683.0,
+      "value_at_risk_presence": 175551560.0,
+      "value_at_risk_overlap": 89261081.56,
+      "value_exposure_pct": 13.522
+    },
+    "Industrial": {
+      "parcel_count": 482,
+      "at_risk_count": 67,
+      "pct_at_risk": 13.9,
+      "total_assessed_value": 473486184.0,
+      "value_at_risk_presence": 97738540.0,
+      "value_at_risk_overlap": 45820007.26,
+      "value_exposure_pct": 20.642
+    },
+    "Other": {
+      "parcel_count": 1004,
+      "at_risk_count": 55,
+      "pct_at_risk": 5.478,
+      "total_assessed_value": 20794618.0,
+      "value_at_risk_presence": 1040180.0,
+      "value_at_risk_overlap": 145080.36,
+      "value_exposure_pct": 5.002
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 1490,
+      "at_risk_count": 238,
+      "pct_at_risk": 15.973,
+      "total_assessed_value": 1854651366.0,
+      "value_at_risk_presence": 202879200.0,
+      "value_at_risk_overlap": 82284005.93,
+      "value_exposure_pct": 10.939
+    },
+    "Vacant": {
+      "parcel_count": 968,
+      "at_risk_count": 150,
+      "pct_at_risk": 15.496,
+      "total_assessed_value": 47590540.0,
+      "value_at_risk_presence": 7353000.0,
+      "value_at_risk_overlap": 5608752.79,
+      "value_exposure_pct": 15.451
+    },
+    "ALL": {
+      "parcel_count": 25324,
+      "at_risk_count": 1928,
+      "pct_at_risk": 7.613,
+      "total_assessed_value": 7669627358.0,
+      "value_at_risk_presence": 764818220.0,
+      "value_at_risk_overlap": 391235654.63,
+      "value_exposure_pct": 9.972
+    }
+  },
+  "either": {
+    "Commercial": {
+      "parcel_count": 3278,
+      "at_risk_count": 360,
+      "pct_at_risk": 10.982,
+      "total_assessed_value": 1298276683.0,
+      "value_at_risk_presence": 175551560.0,
+      "value_at_risk_overlap": 89261081.56,
+      "value_exposure_pct": 13.522
+    },
+    "Industrial": {
+      "parcel_count": 482,
+      "at_risk_count": 67,
+      "pct_at_risk": 13.9,
+      "total_assessed_value": 473486184.0,
+      "value_at_risk_presence": 97738540.0,
+      "value_at_risk_overlap": 45820007.26,
+      "value_exposure_pct": 20.642
+    },
+    "Residential": {
+      "parcel_count": 18102,
+      "at_risk_count": 1058,
+      "pct_at_risk": 5.845,
+      "total_assessed_value": 3974827967.0,
+      "value_at_risk_presence": 280255740.0,
+      "value_at_risk_overlap": 168116726.73,
+      "value_exposure_pct": 7.051
+    },
+    "Vacant": {
+      "parcel_count": 968,
+      "at_risk_count": 150,
+      "pct_at_risk": 15.496,
+      "total_assessed_value": 47590540.0,
+      "value_at_risk_presence": 7353000.0,
+      "value_at_risk_overlap": 5608752.79,
+      "value_exposure_pct": 15.451
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 1490,
+      "at_risk_count": 238,
+      "pct_at_risk": 15.973,
+      "total_assessed_value": 1854651366.0,
+      "value_at_risk_presence": 202879200.0,
+      "value_at_risk_overlap": 82284005.93,
+      "value_exposure_pct": 10.939
+    },
+    "Other": {
+      "parcel_count": 1004,
+      "at_risk_count": 55,
+      "pct_at_risk": 5.478,
+      "total_assessed_value": 20794618.0,
+      "value_at_risk_presence": 1040180.0,
+      "value_at_risk_overlap": 145080.36,
+      "value_exposure_pct": 5.002
+    },
+    "ALL": {
+      "parcel_count": 25324,
+      "at_risk_count": 1928,
+      "pct_at_risk": 7.613,
+      "total_assessed_value": 7669627358.0,
+      "value_at_risk_presence": 764818220.0,
+      "value_at_risk_overlap": 391235654.63,
+      "value_exposure_pct": 9.972
+    }
+  },
+  "mun_name": "PATERSON CITY",
+  "county_name": "PASSAIC"
+}

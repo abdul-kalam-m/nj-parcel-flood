@@ -3,7 +3,7 @@
 **Project:** NJ Parcel Flood Risk Dashboard — statewide parcel-scale flood exposure for financial & insurance review
 **Owner:** Abdul Kalam Azad Mustaq (ar.abdulkalam.mustaq@gmail.com)
 **Guide version:** 1.1 — written 2026-07-18, repo location corrected 2026-08-02
-**Status:** Phase 5 done — statewide, 21/21 counties, composite score + bands computed, §12.1 recompute-check gate independently verified PASS across every one of 3,478,722 rows (see SCORE_SUMMARY.md). **Known limitation, owner-approved to carry forward, not resolved:** statewide MOD-IV join rate 88.34%, below the required ≥97% gate (see PROGRESS.md 2026-08-12). Next: Phase 6 (`06_aggregate.py`, §5.5).
+**Status:** Guide-Phase 5 (Aggregates, §11) done — statewide, 3,478,722 parcels / 564 munis, rollup invariant (muni=county=state ±0.1%) independently verified PASS (see AGGREGATE_SUMMARY.md). Note: this session's PROGRESS.md entries for `04_claims.py`/`05_score.py` mislabeled them as separate phases — corrected 2026-08-13; see that entry. **Known limitation, owner-approved to carry forward, not resolved:** statewide MOD-IV join rate 88.34%, below the required ≥97% gate (see PROGRESS.md 2026-08-12). Next: guide-Phase 6 (`07_tiles.py` + `08_search_index.py`).
 **Guide location (canonical):** `I:\My Drive\RUTGERS\Portfolio Projects\8. NJ FLOOD RISK DASHBOARD\OPERATING_GUIDE.md`
 **Source spec:** `nj_parcel_flood_risk_spec_sheet.md` (same folder) — requirements source. This guide operationalizes it; **on conflict, this guide wins** (deviations listed in §2).
 **Sibling:** Project 9 (`9. NJ HAZARD DASHBOARD\`) reuses this project's **parcel core** (§6.5). Build order matters: this project first.

@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Vacant": {
+      "parcel_count": 29,
+      "at_risk_count": 8,
+      "pct_at_risk": 27.586,
+      "total_assessed_value": 3488200.0,
+      "value_at_risk_presence": 1606900.0,
+      "value_at_risk_overlap": 898892.55,
+      "value_exposure_pct": 46.067
+    },
+    "Residential": {
+      "parcel_count": 814,
+      "at_risk_count": 45,
+      "pct_at_risk": 5.528,
+      "total_assessed_value": 376037800.0,
+      "value_at_risk_presence": 16197500.0,
+      "value_at_risk_overlap": 6373423.82,
+      "value_exposure_pct": 4.307
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 63,
+      "at_risk_count": 9,
+      "pct_at_risk": 14.286,
+      "total_assessed_value": 68733300.0,
+      "value_at_risk_presence": 16937300.0,
+      "value_at_risk_overlap": 1584787.21,
+      "value_exposure_pct": 24.642
+    },
+    "Commercial": {
+      "parcel_count": 205,
+      "at_risk_count": 16,
+      "pct_at_risk": 7.805,
+      "total_assessed_value": 221598500.0,
+      "value_at_risk_presence": 12954600.0,
+      "value_at_risk_overlap": 8591203.87,
+      "value_exposure_pct": 5.846
+    },
+    "Industrial": {
+      "parcel_count": 2,
+      "at_risk_count": 1,
+      "pct_at_risk": 50.0,
+      "total_assessed_value": 2296000.0,
+      "value_at_risk_presence": 1255000.0,
+      "value_at_risk_overlap": 385328.77,
+      "value_exposure_pct": 54.66
+    },
+    "Other": {
+      "parcel_count": 66,
+      "at_risk_count": 7,
+      "pct_at_risk": 10.606,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "ALL": {
+      "parcel_count": 1179,
+      "at_risk_count": 86,
+      "pct_at_risk": 7.294,
+      "total_assessed_value": 672153800.0,
+      "value_at_risk_presence": 48951300.0,
+      "value_at_risk_overlap": 17833636.22,
+      "value_exposure_pct": 7.283
+    }
+  },
+  "either": {
+    "Commercial": {
+      "parcel_count": 205,
+      "at_risk_count": 16,
+      "pct_at_risk": 7.805,
+      "total_assessed_value": 221598500.0,
+      "value_at_risk_presence": 12954600.0,
+      "value_at_risk_overlap": 8591203.87,
+      "value_exposure_pct": 5.846
+    },
+    "Industrial": {
+      "parcel_count": 2,
+      "at_risk_count": 1,
+      "pct_at_risk": 50.0,
+      "total_assessed_value": 2296000.0,
+      "value_at_risk_presence": 1255000.0,
+      "value_at_risk_overlap": 385328.77,
+      "value_exposure_pct": 54.66
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 63,
+      "at_risk_count": 9,
+      "pct_at_risk": 14.286,
+      "total_assessed_value": 68733300.0,
+      "value_at_risk_presence": 16937300.0,
+      "value_at_risk_overlap": 1584787.21,
+      "value_exposure_pct": 24.642
+    },
+    "Other": {
+      "parcel_count": 66,
+      "at_risk_count": 7,
+      "pct_at_risk": 10.606,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Residential": {
+      "parcel_count": 814,
+      "at_risk_count": 45,
+      "pct_at_risk": 5.528,
+      "total_assessed_value": 376037800.0,
+      "value_at_risk_presence": 16197500.0,
+      "value_at_risk_overlap": 6373423.82,
+      "value_exposure_pct": 4.307
+    },
+    "Vacant": {
+      "parcel_count": 29,
+      "at_risk_count": 8,
+      "pct_at_risk": 27.586,
+      "total_assessed_value": 3488200.0,
+      "value_at_risk_presence": 1606900.0,
+      "value_at_risk_overlap": 898892.55,
+      "value_exposure_pct": 46.067
+    },
+    "ALL": {
+      "parcel_count": 1179,
+      "at_risk_count": 86,
+      "pct_at_risk": 7.294,
+      "total_assessed_value": 672153800.0,
+      "value_at_risk_presence": 48951300.0,
+      "value_at_risk_overlap": 17833636.22,
+      "value_exposure_pct": 7.283
+    }
+  },
+  "mun_name": "FLEMINGTON BORO",
+  "county_name": "HUNTERDON"
+}

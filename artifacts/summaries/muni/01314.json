@@ -1,0 +1,199 @@
+{
+  "current": {
+    "Vacant": {
+      "parcel_count": 2342,
+      "at_risk_count": 100,
+      "pct_at_risk": 4.27,
+      "total_assessed_value": 499816200.0,
+      "value_at_risk_presence": 107627900.0,
+      "value_at_risk_overlap": 71154248.24,
+      "value_exposure_pct": 21.533
+    },
+    "Other": {
+      "parcel_count": 4684,
+      "at_risk_count": 246,
+      "pct_at_risk": 5.252,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Residential": {
+      "parcel_count": 29539,
+      "at_risk_count": 51,
+      "pct_at_risk": 0.173,
+      "total_assessed_value": 6598021200.0,
+      "value_at_risk_presence": 10463500.0,
+      "value_at_risk_overlap": 4828469.85,
+      "value_exposure_pct": 0.159
+    },
+    "Commercial": {
+      "parcel_count": 4421,
+      "at_risk_count": 85,
+      "pct_at_risk": 1.923,
+      "total_assessed_value": 3486874900.0,
+      "value_at_risk_presence": 171391500.0,
+      "value_at_risk_overlap": 78928923.8,
+      "value_exposure_pct": 4.915
+    },
+    "Industrial": {
+      "parcel_count": 968,
+      "at_risk_count": 156,
+      "pct_at_risk": 16.116,
+      "total_assessed_value": 1385855500.0,
+      "value_at_risk_presence": 562549300.0,
+      "value_at_risk_overlap": 417506198.68,
+      "value_exposure_pct": 40.592
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 4568,
+      "at_risk_count": 163,
+      "pct_at_risk": 3.568,
+      "total_assessed_value": 8106333800.0,
+      "value_at_risk_presence": 1638750900.0,
+      "value_at_risk_overlap": 1087638546.13,
+      "value_exposure_pct": 20.216
+    },
+    "ALL": {
+      "parcel_count": 46522,
+      "at_risk_count": 801,
+      "pct_at_risk": 1.722,
+      "total_assessed_value": 20076901600.0,
+      "value_at_risk_presence": 2490783100.0,
+      "value_at_risk_overlap": 1660056386.7,
+      "value_exposure_pct": 12.406
+    }
+  },
+  "future": {
+    "Vacant": {
+      "parcel_count": 2342,
+      "at_risk_count": 485,
+      "pct_at_risk": 20.709,
+      "total_assessed_value": 499816200.0,
+      "value_at_risk_presence": 241467700.0,
+      "value_at_risk_overlap": 200385987.68,
+      "value_exposure_pct": 48.311
+    },
+    "Other": {
+      "parcel_count": 4684,
+      "at_risk_count": 815,
+      "pct_at_risk": 17.4,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Residential": {
+      "parcel_count": 29539,
+      "at_risk_count": 3594,
+      "pct_at_risk": 12.167,
+      "total_assessed_value": 6598021200.0,
+      "value_at_risk_presence": 937518700.0,
+      "value_at_risk_overlap": 832794841.8,
+      "value_exposure_pct": 14.209
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 4568,
+      "at_risk_count": 447,
+      "pct_at_risk": 9.785,
+      "total_assessed_value": 8106333800.0,
+      "value_at_risk_presence": 1951324700.0,
+      "value_at_risk_overlap": 1742642426.14,
+      "value_exposure_pct": 24.072
+    },
+    "Commercial": {
+      "parcel_count": 4421,
+      "at_risk_count": 1242,
+      "pct_at_risk": 28.093,
+      "total_assessed_value": 3486874900.0,
+      "value_at_risk_presence": 1094807500.0,
+      "value_at_risk_overlap": 884035371.43,
+      "value_exposure_pct": 31.398
+    },
+    "Industrial": {
+      "parcel_count": 968,
+      "at_risk_count": 649,
+      "pct_at_risk": 67.045,
+      "total_assessed_value": 1385855500.0,
+      "value_at_risk_presence": 1162688900.0,
+      "value_at_risk_overlap": 1027617398.75,
+      "value_exposure_pct": 83.897
+    },
+    "ALL": {
+      "parcel_count": 46522,
+      "at_risk_count": 7232,
+      "pct_at_risk": 15.545,
+      "total_assessed_value": 20076901600.0,
+      "value_at_risk_presence": 5387807500.0,
+      "value_at_risk_overlap": 4687476025.8,
+      "value_exposure_pct": 26.836
+    }
+  },
+  "either": {
+    "Vacant": {
+      "parcel_count": 2342,
+      "at_risk_count": 487,
+      "pct_at_risk": 20.794,
+      "total_assessed_value": 499816200.0,
+      "value_at_risk_presence": 241620500.0,
+      "value_at_risk_overlap": 210018055.57,
+      "value_exposure_pct": 48.342
+    },
+    "Residential": {
+      "parcel_count": 29539,
+      "at_risk_count": 3612,
+      "pct_at_risk": 12.228,
+      "total_assessed_value": 6598021200.0,
+      "value_at_risk_presence": 940997800.0,
+      "value_at_risk_overlap": 833603719.97,
+      "value_exposure_pct": 14.262
+    },
+    "Commercial": {
+      "parcel_count": 4421,
+      "at_risk_count": 1242,
+      "pct_at_risk": 28.093,
+      "total_assessed_value": 3486874900.0,
+      "value_at_risk_presence": 1094807500.0,
+      "value_at_risk_overlap": 889059493.34,
+      "value_exposure_pct": 31.398
+    },
+    "Industrial": {
+      "parcel_count": 968,
+      "at_risk_count": 649,
+      "pct_at_risk": 67.045,
+      "total_assessed_value": 1385855500.0,
+      "value_at_risk_presence": 1162688900.0,
+      "value_at_risk_overlap": 1032772989.22,
+      "value_exposure_pct": 83.897
+    },
+    "Other": {
+      "parcel_count": 4684,
+      "at_risk_count": 829,
+      "pct_at_risk": 17.699,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 4568,
+      "at_risk_count": 461,
+      "pct_at_risk": 10.092,
+      "total_assessed_value": 8106333800.0,
+      "value_at_risk_presence": 2335772400.0,
+      "value_at_risk_overlap": 2098426240.25,
+      "value_exposure_pct": 28.814
+    },
+    "ALL": {
+      "parcel_count": 46522,
+      "at_risk_count": 7280,
+      "pct_at_risk": 15.649,
+      "total_assessed_value": 20076901600.0,
+      "value_at_risk_presence": 5775887100.0,
+      "value_at_risk_overlap": 5063880498.36,
+      "value_exposure_pct": 28.769
+    }
+  },
+  "mun_name": "NEWARK CITY",
+  "county_name": "ESSEX"
+}

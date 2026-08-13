@@ -28,8 +28,10 @@ by count and assessed value).
 
 ## Status
 
-Phase 5 (composite score + bands) done, statewide — every parcel now has a
-0–100 score, and the §12.1 recompute-check gate was independently verified
-across all 3,478,722 rows, not sampled. Phase 6 (aggregates) next. Known
+Guide-Phase 5 (aggregates, §5.5/§11) done, statewide — county/muni/class-group
+× current/future/either rollups for all 3,478,722 parcels and 564
+municipalities, rollup invariant (muni sums = county = state, ±0.1%)
+independently verified. Guide-Phase 6 (tiles + search index) next. Known
 limitation carried from Phase 1, owner-approved: statewide MOD-IV join rate is
-88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and `SCORE_SUMMARY.md`.
+88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and
+`AGGREGATE_SUMMARY.md`.

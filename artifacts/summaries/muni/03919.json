@@ -1,0 +1,199 @@
+{
+  "current": {
+    "Residential": {
+      "parcel_count": 15779,
+      "at_risk_count": 792,
+      "pct_at_risk": 5.019,
+      "total_assessed_value": 762362000.0,
+      "value_at_risk_presence": 43767000.0,
+      "value_at_risk_overlap": 22802066.43,
+      "value_exposure_pct": 5.741
+    },
+    "Commercial": {
+      "parcel_count": 696,
+      "at_risk_count": 58,
+      "pct_at_risk": 8.333,
+      "total_assessed_value": 177409600.0,
+      "value_at_risk_presence": 35299100.0,
+      "value_at_risk_overlap": 13017077.79,
+      "value_exposure_pct": 19.897
+    },
+    "Industrial": {
+      "parcel_count": 187,
+      "at_risk_count": 34,
+      "pct_at_risk": 18.182,
+      "total_assessed_value": 64583600.0,
+      "value_at_risk_presence": 16353400.0,
+      "value_at_risk_overlap": 6863307.67,
+      "value_exposure_pct": 25.321
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 576,
+      "at_risk_count": 126,
+      "pct_at_risk": 21.875,
+      "total_assessed_value": 183819000.0,
+      "value_at_risk_presence": 98829400.0,
+      "value_at_risk_overlap": 33841286.88,
+      "value_exposure_pct": 53.765
+    },
+    "Other": {
+      "parcel_count": 435,
+      "at_risk_count": 9,
+      "pct_at_risk": 2.069,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Vacant": {
+      "parcel_count": 151,
+      "at_risk_count": 29,
+      "pct_at_risk": 19.205,
+      "total_assessed_value": 7573300.0,
+      "value_at_risk_presence": 429600.0,
+      "value_at_risk_overlap": 272273.52,
+      "value_exposure_pct": 5.673
+    },
+    "ALL": {
+      "parcel_count": 17824,
+      "at_risk_count": 1048,
+      "pct_at_risk": 5.88,
+      "total_assessed_value": 1195747500.0,
+      "value_at_risk_presence": 194678500.0,
+      "value_at_risk_overlap": 76796012.28,
+      "value_exposure_pct": 16.281
+    }
+  },
+  "future": {
+    "Residential": {
+      "parcel_count": 15779,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 762362000.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Commercial": {
+      "parcel_count": 696,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 177409600.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Industrial": {
+      "parcel_count": 187,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 64583600.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Vacant": {
+      "parcel_count": 151,
+      "at_risk_count": 1,
+      "pct_at_risk": 0.662,
+      "total_assessed_value": 7573300.0,
+      "value_at_risk_presence": 5400.0,
+      "value_at_risk_overlap": 1022.51,
+      "value_exposure_pct": 0.071
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 576,
+      "at_risk_count": 2,
+      "pct_at_risk": 0.347,
+      "total_assessed_value": 183819000.0,
+      "value_at_risk_presence": 338000.0,
+      "value_at_risk_overlap": 216600.81,
+      "value_exposure_pct": 0.184
+    },
+    "Other": {
+      "parcel_count": 435,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "ALL": {
+      "parcel_count": 17824,
+      "at_risk_count": 3,
+      "pct_at_risk": 0.017,
+      "total_assessed_value": 1195747500.0,
+      "value_at_risk_presence": 343400.0,
+      "value_at_risk_overlap": 217623.32,
+      "value_exposure_pct": 0.029
+    }
+  },
+  "either": {
+    "Residential": {
+      "parcel_count": 15779,
+      "at_risk_count": 792,
+      "pct_at_risk": 5.019,
+      "total_assessed_value": 762362000.0,
+      "value_at_risk_presence": 43767000.0,
+      "value_at_risk_overlap": 22802066.43,
+      "value_exposure_pct": 5.741
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 576,
+      "at_risk_count": 126,
+      "pct_at_risk": 21.875,
+      "total_assessed_value": 183819000.0,
+      "value_at_risk_presence": 98829400.0,
+      "value_at_risk_overlap": 33841737.73,
+      "value_exposure_pct": 53.765
+    },
+    "Other": {
+      "parcel_count": 435,
+      "at_risk_count": 9,
+      "pct_at_risk": 2.069,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Commercial": {
+      "parcel_count": 696,
+      "at_risk_count": 58,
+      "pct_at_risk": 8.333,
+      "total_assessed_value": 177409600.0,
+      "value_at_risk_presence": 35299100.0,
+      "value_at_risk_overlap": 13017077.79,
+      "value_exposure_pct": 19.897
+    },
+    "Industrial": {
+      "parcel_count": 187,
+      "at_risk_count": 34,
+      "pct_at_risk": 18.182,
+      "total_assessed_value": 64583600.0,
+      "value_at_risk_presence": 16353400.0,
+      "value_at_risk_overlap": 6863307.67,
+      "value_exposure_pct": 25.321
+    },
+    "Vacant": {
+      "parcel_count": 151,
+      "at_risk_count": 29,
+      "pct_at_risk": 19.205,
+      "total_assessed_value": 7573300.0,
+      "value_at_risk_presence": 429600.0,
+      "value_at_risk_overlap": 272273.53,
+      "value_exposure_pct": 5.673
+    },
+    "ALL": {
+      "parcel_count": 17824,
+      "at_risk_count": 1048,
+      "pct_at_risk": 5.88,
+      "total_assessed_value": 1195747500.0,
+      "value_at_risk_presence": 194678500.0,
+      "value_at_risk_overlap": 76796463.14,
+      "value_exposure_pct": 16.281
+    }
+  },
+  "mun_name": "UNION TWP",
+  "county_name": "UNION"
+}

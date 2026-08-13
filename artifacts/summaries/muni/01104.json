@@ -1,0 +1,199 @@
+{
+  "current": {
+    "Farm/Agricultural": {
+      "parcel_count": 144,
+      "at_risk_count": 93,
+      "pct_at_risk": 64.583,
+      "total_assessed_value": 2266300.0,
+      "value_at_risk_presence": 1107400.0,
+      "value_at_risk_overlap": 696689.99,
+      "value_exposure_pct": 48.864
+    },
+    "Vacant": {
+      "parcel_count": 454,
+      "at_risk_count": 358,
+      "pct_at_risk": 78.855,
+      "total_assessed_value": 10419900.0,
+      "value_at_risk_presence": 5942800.0,
+      "value_at_risk_overlap": 4881534.11,
+      "value_exposure_pct": 57.033
+    },
+    "Other": {
+      "parcel_count": 95,
+      "at_risk_count": 75,
+      "pct_at_risk": 78.947,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 516,
+      "at_risk_count": 454,
+      "pct_at_risk": 87.984,
+      "total_assessed_value": 40656200.0,
+      "value_at_risk_presence": 27281300.0,
+      "value_at_risk_overlap": 19112183.45,
+      "value_exposure_pct": 67.102
+    },
+    "Residential": {
+      "parcel_count": 925,
+      "at_risk_count": 663,
+      "pct_at_risk": 71.676,
+      "total_assessed_value": 133842600.0,
+      "value_at_risk_presence": 98693000.0,
+      "value_at_risk_overlap": 82482070.59,
+      "value_exposure_pct": 73.738
+    },
+    "Commercial": {
+      "parcel_count": 41,
+      "at_risk_count": 33,
+      "pct_at_risk": 80.488,
+      "total_assessed_value": 6226000.0,
+      "value_at_risk_presence": 4052000.0,
+      "value_at_risk_overlap": 3646079.54,
+      "value_exposure_pct": 65.082
+    },
+    "ALL": {
+      "parcel_count": 2175,
+      "at_risk_count": 1676,
+      "pct_at_risk": 77.057,
+      "total_assessed_value": 193411000.0,
+      "value_at_risk_presence": 137076500.0,
+      "value_at_risk_overlap": 110818557.68,
+      "value_exposure_pct": 70.873
+    }
+  },
+  "future": {
+    "Farm/Agricultural": {
+      "parcel_count": 144,
+      "at_risk_count": 128,
+      "pct_at_risk": 88.889,
+      "total_assessed_value": 2266300.0,
+      "value_at_risk_presence": 2023900.0,
+      "value_at_risk_overlap": 1948842.25,
+      "value_exposure_pct": 89.304
+    },
+    "Vacant": {
+      "parcel_count": 454,
+      "at_risk_count": 425,
+      "pct_at_risk": 93.612,
+      "total_assessed_value": 10419900.0,
+      "value_at_risk_presence": 7227100.0,
+      "value_at_risk_overlap": 6711637.02,
+      "value_exposure_pct": 69.359
+    },
+    "Residential": {
+      "parcel_count": 925,
+      "at_risk_count": 917,
+      "pct_at_risk": 99.135,
+      "total_assessed_value": 133842600.0,
+      "value_at_risk_presence": 132504400.0,
+      "value_at_risk_overlap": 128929868.77,
+      "value_exposure_pct": 99.0
+    },
+    "Commercial": {
+      "parcel_count": 41,
+      "at_risk_count": 36,
+      "pct_at_risk": 87.805,
+      "total_assessed_value": 6226000.0,
+      "value_at_risk_presence": 4353500.0,
+      "value_at_risk_overlap": 4260855.19,
+      "value_exposure_pct": 69.925
+    },
+    "Other": {
+      "parcel_count": 95,
+      "at_risk_count": 82,
+      "pct_at_risk": 86.316,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 516,
+      "at_risk_count": 485,
+      "pct_at_risk": 93.992,
+      "total_assessed_value": 40656200.0,
+      "value_at_risk_presence": 29688300.0,
+      "value_at_risk_overlap": 27524235.24,
+      "value_exposure_pct": 73.023
+    },
+    "ALL": {
+      "parcel_count": 2175,
+      "at_risk_count": 2073,
+      "pct_at_risk": 95.31,
+      "total_assessed_value": 193411000.0,
+      "value_at_risk_presence": 175797200.0,
+      "value_at_risk_overlap": 169375438.47,
+      "value_exposure_pct": 90.893
+    }
+  },
+  "either": {
+    "Farm/Agricultural": {
+      "parcel_count": 144,
+      "at_risk_count": 128,
+      "pct_at_risk": 88.889,
+      "total_assessed_value": 2266300.0,
+      "value_at_risk_presence": 2023900.0,
+      "value_at_risk_overlap": 1948842.25,
+      "value_exposure_pct": 89.304
+    },
+    "Vacant": {
+      "parcel_count": 454,
+      "at_risk_count": 425,
+      "pct_at_risk": 93.612,
+      "total_assessed_value": 10419900.0,
+      "value_at_risk_presence": 7227100.0,
+      "value_at_risk_overlap": 6728693.36,
+      "value_exposure_pct": 69.359
+    },
+    "Other": {
+      "parcel_count": 95,
+      "at_risk_count": 84,
+      "pct_at_risk": 88.421,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 516,
+      "at_risk_count": 488,
+      "pct_at_risk": 94.574,
+      "total_assessed_value": 40656200.0,
+      "value_at_risk_presence": 33912300.0,
+      "value_at_risk_overlap": 28031448.81,
+      "value_exposure_pct": 83.412
+    },
+    "Residential": {
+      "parcel_count": 925,
+      "at_risk_count": 917,
+      "pct_at_risk": 99.135,
+      "total_assessed_value": 133842600.0,
+      "value_at_risk_presence": 132504400.0,
+      "value_at_risk_overlap": 129452677.49,
+      "value_exposure_pct": 99.0
+    },
+    "Commercial": {
+      "parcel_count": 41,
+      "at_risk_count": 36,
+      "pct_at_risk": 87.805,
+      "total_assessed_value": 6226000.0,
+      "value_at_risk_presence": 4353500.0,
+      "value_at_risk_overlap": 4270491.69,
+      "value_exposure_pct": 69.925
+    },
+    "ALL": {
+      "parcel_count": 2175,
+      "at_risk_count": 2078,
+      "pct_at_risk": 95.54,
+      "total_assessed_value": 193411000.0,
+      "value_at_risk_presence": 180021200.0,
+      "value_at_risk_overlap": 170432153.59,
+      "value_exposure_pct": 93.077
+    }
+  },
+  "mun_name": "DOWNE TWP",
+  "county_name": "CUMBERLAND"
+}

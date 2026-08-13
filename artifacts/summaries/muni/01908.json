@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Farm/Agricultural": {
+      "parcel_count": 373,
+      "at_risk_count": 72,
+      "pct_at_risk": 19.303,
+      "total_assessed_value": 6001500.0,
+      "value_at_risk_presence": 2125700.0,
+      "value_at_risk_overlap": 334087.94,
+      "value_exposure_pct": 35.419
+    },
+    "Vacant": {
+      "parcel_count": 134,
+      "at_risk_count": 13,
+      "pct_at_risk": 9.701,
+      "total_assessed_value": 6944400.0,
+      "value_at_risk_presence": 1151800.0,
+      "value_at_risk_overlap": 403170.34,
+      "value_exposure_pct": 16.586
+    },
+    "Other": {
+      "parcel_count": 41,
+      "at_risk_count": 5,
+      "pct_at_risk": 12.195,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 131,
+      "at_risk_count": 19,
+      "pct_at_risk": 14.504,
+      "total_assessed_value": 45708900.0,
+      "value_at_risk_presence": 6065800.0,
+      "value_at_risk_overlap": 1042647.31,
+      "value_exposure_pct": 13.271
+    },
+    "Residential": {
+      "parcel_count": 1248,
+      "at_risk_count": 106,
+      "pct_at_risk": 8.494,
+      "total_assessed_value": 456886200.0,
+      "value_at_risk_presence": 41442100.0,
+      "value_at_risk_overlap": 11614060.27,
+      "value_exposure_pct": 9.071
+    },
+    "Commercial": {
+      "parcel_count": 34,
+      "at_risk_count": 3,
+      "pct_at_risk": 8.824,
+      "total_assessed_value": 24979500.0,
+      "value_at_risk_presence": 5895300.0,
+      "value_at_risk_overlap": 888203.42,
+      "value_exposure_pct": 23.601
+    },
+    "ALL": {
+      "parcel_count": 1961,
+      "at_risk_count": 218,
+      "pct_at_risk": 11.117,
+      "total_assessed_value": 540520500.0,
+      "value_at_risk_presence": 56680700.0,
+      "value_at_risk_overlap": 14282169.27,
+      "value_exposure_pct": 10.486
+    }
+  },
+  "either": {
+    "Farm/Agricultural": {
+      "parcel_count": 373,
+      "at_risk_count": 72,
+      "pct_at_risk": 19.303,
+      "total_assessed_value": 6001500.0,
+      "value_at_risk_presence": 2125700.0,
+      "value_at_risk_overlap": 334087.94,
+      "value_exposure_pct": 35.419
+    },
+    "Vacant": {
+      "parcel_count": 134,
+      "at_risk_count": 13,
+      "pct_at_risk": 9.701,
+      "total_assessed_value": 6944400.0,
+      "value_at_risk_presence": 1151800.0,
+      "value_at_risk_overlap": 403170.34,
+      "value_exposure_pct": 16.586
+    },
+    "Other": {
+      "parcel_count": 41,
+      "at_risk_count": 5,
+      "pct_at_risk": 12.195,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 131,
+      "at_risk_count": 19,
+      "pct_at_risk": 14.504,
+      "total_assessed_value": 45708900.0,
+      "value_at_risk_presence": 6065800.0,
+      "value_at_risk_overlap": 1042647.31,
+      "value_exposure_pct": 13.271
+    },
+    "Residential": {
+      "parcel_count": 1248,
+      "at_risk_count": 106,
+      "pct_at_risk": 8.494,
+      "total_assessed_value": 456886200.0,
+      "value_at_risk_presence": 41442100.0,
+      "value_at_risk_overlap": 11614060.27,
+      "value_exposure_pct": 9.071
+    },
+    "Commercial": {
+      "parcel_count": 34,
+      "at_risk_count": 3,
+      "pct_at_risk": 8.824,
+      "total_assessed_value": 24979500.0,
+      "value_at_risk_presence": 5895300.0,
+      "value_at_risk_overlap": 888203.42,
+      "value_exposure_pct": 23.601
+    },
+    "ALL": {
+      "parcel_count": 1961,
+      "at_risk_count": 218,
+      "pct_at_risk": 11.117,
+      "total_assessed_value": 540520500.0,
+      "value_at_risk_presence": 56680700.0,
+      "value_at_risk_overlap": 14282169.27,
+      "value_exposure_pct": 10.486
+    }
+  },
+  "mun_name": "EAST AMWELL TWP",
+  "county_name": "HUNTERDON"
+}

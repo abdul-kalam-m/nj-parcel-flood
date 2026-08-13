@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Other": {
+      "parcel_count": 11,
+      "at_risk_count": 2,
+      "pct_at_risk": 18.182,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 49,
+      "at_risk_count": 14,
+      "pct_at_risk": 28.571,
+      "total_assessed_value": 9293700.0,
+      "value_at_risk_presence": 2663300.0,
+      "value_at_risk_overlap": 1431040.87,
+      "value_exposure_pct": 28.657
+    },
+    "Vacant": {
+      "parcel_count": 35,
+      "at_risk_count": 5,
+      "pct_at_risk": 14.286,
+      "total_assessed_value": 1103300.0,
+      "value_at_risk_presence": 129300.0,
+      "value_at_risk_overlap": 108698.58,
+      "value_exposure_pct": 11.719
+    },
+    "Farm/Agricultural": {
+      "parcel_count": 6,
+      "at_risk_count": 2,
+      "pct_at_risk": 33.333,
+      "total_assessed_value": 33400.0,
+      "value_at_risk_presence": 800.0,
+      "value_at_risk_overlap": 243.63,
+      "value_exposure_pct": 2.395
+    },
+    "Residential": {
+      "parcel_count": 186,
+      "at_risk_count": 22,
+      "pct_at_risk": 11.828,
+      "total_assessed_value": 45193800.0,
+      "value_at_risk_presence": 6027300.0,
+      "value_at_risk_overlap": 2308194.62,
+      "value_exposure_pct": 13.337
+    },
+    "Commercial": {
+      "parcel_count": 52,
+      "at_risk_count": 11,
+      "pct_at_risk": 21.154,
+      "total_assessed_value": 19647300.0,
+      "value_at_risk_presence": 4661500.0,
+      "value_at_risk_overlap": 1976130.66,
+      "value_exposure_pct": 23.726
+    },
+    "ALL": {
+      "parcel_count": 339,
+      "at_risk_count": 56,
+      "pct_at_risk": 16.519,
+      "total_assessed_value": 75271500.0,
+      "value_at_risk_presence": 13482200.0,
+      "value_at_risk_overlap": 5824308.36,
+      "value_exposure_pct": 17.911
+    }
+  },
+  "either": {
+    "Other": {
+      "parcel_count": 11,
+      "at_risk_count": 2,
+      "pct_at_risk": 18.182,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Vacant": {
+      "parcel_count": 35,
+      "at_risk_count": 5,
+      "pct_at_risk": 14.286,
+      "total_assessed_value": 1103300.0,
+      "value_at_risk_presence": 129300.0,
+      "value_at_risk_overlap": 108698.58,
+      "value_exposure_pct": 11.719
+    },
+    "Farm/Agricultural": {
+      "parcel_count": 6,
+      "at_risk_count": 2,
+      "pct_at_risk": 33.333,
+      "total_assessed_value": 33400.0,
+      "value_at_risk_presence": 800.0,
+      "value_at_risk_overlap": 243.63,
+      "value_exposure_pct": 2.395
+    },
+    "Commercial": {
+      "parcel_count": 52,
+      "at_risk_count": 11,
+      "pct_at_risk": 21.154,
+      "total_assessed_value": 19647300.0,
+      "value_at_risk_presence": 4661500.0,
+      "value_at_risk_overlap": 1976130.66,
+      "value_exposure_pct": 23.726
+    },
+    "Residential": {
+      "parcel_count": 186,
+      "at_risk_count": 22,
+      "pct_at_risk": 11.828,
+      "total_assessed_value": 45193800.0,
+      "value_at_risk_presence": 6027300.0,
+      "value_at_risk_overlap": 2308194.62,
+      "value_exposure_pct": 13.337
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 49,
+      "at_risk_count": 14,
+      "pct_at_risk": 28.571,
+      "total_assessed_value": 9293700.0,
+      "value_at_risk_presence": 2663300.0,
+      "value_at_risk_overlap": 1431040.87,
+      "value_exposure_pct": 28.657
+    },
+    "ALL": {
+      "parcel_count": 339,
+      "at_risk_count": 56,
+      "pct_at_risk": 16.519,
+      "total_assessed_value": 75271500.0,
+      "value_at_risk_presence": 13482200.0,
+      "value_at_risk_overlap": 5824308.36,
+      "value_exposure_pct": 17.911
+    }
+  },
+  "mun_name": "ANDOVER BORO",
+  "county_name": "SUSSEX"
+}

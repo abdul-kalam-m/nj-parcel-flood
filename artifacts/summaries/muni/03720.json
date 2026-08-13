@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Other": {
+      "parcel_count": 49,
+      "at_risk_count": 6,
+      "pct_at_risk": 12.245,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Commercial": {
+      "parcel_count": 44,
+      "at_risk_count": 2,
+      "pct_at_risk": 4.545,
+      "total_assessed_value": 13642800.0,
+      "value_at_risk_presence": 286300.0,
+      "value_at_risk_overlap": 29510.65,
+      "value_exposure_pct": 2.099
+    },
+    "Farm/Agricultural": {
+      "parcel_count": 247,
+      "at_risk_count": 17,
+      "pct_at_risk": 6.883,
+      "total_assessed_value": 2417000.0,
+      "value_at_risk_presence": 477700.0,
+      "value_at_risk_overlap": 88703.35,
+      "value_exposure_pct": 19.764
+    },
+    "Vacant": {
+      "parcel_count": 279,
+      "at_risk_count": 18,
+      "pct_at_risk": 6.452,
+      "total_assessed_value": 6317000.0,
+      "value_at_risk_presence": 541300.0,
+      "value_at_risk_overlap": 297590.39,
+      "value_exposure_pct": 8.569
+    },
+    "Residential": {
+      "parcel_count": 1655,
+      "at_risk_count": 100,
+      "pct_at_risk": 6.042,
+      "total_assessed_value": 342725700.0,
+      "value_at_risk_presence": 23720600.0,
+      "value_at_risk_overlap": 4242187.83,
+      "value_exposure_pct": 6.921
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 305,
+      "at_risk_count": 13,
+      "pct_at_risk": 4.262,
+      "total_assessed_value": 61598100.0,
+      "value_at_risk_presence": 3843400.0,
+      "value_at_risk_overlap": 877438.78,
+      "value_exposure_pct": 6.239
+    },
+    "ALL": {
+      "parcel_count": 2579,
+      "at_risk_count": 156,
+      "pct_at_risk": 6.049,
+      "total_assessed_value": 426700600.0,
+      "value_at_risk_presence": 28869300.0,
+      "value_at_risk_overlap": 5535431.0,
+      "value_exposure_pct": 6.766
+    }
+  },
+  "either": {
+    "Other": {
+      "parcel_count": 49,
+      "at_risk_count": 6,
+      "pct_at_risk": 12.245,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Vacant": {
+      "parcel_count": 279,
+      "at_risk_count": 18,
+      "pct_at_risk": 6.452,
+      "total_assessed_value": 6317000.0,
+      "value_at_risk_presence": 541300.0,
+      "value_at_risk_overlap": 297590.39,
+      "value_exposure_pct": 8.569
+    },
+    "Farm/Agricultural": {
+      "parcel_count": 247,
+      "at_risk_count": 17,
+      "pct_at_risk": 6.883,
+      "total_assessed_value": 2417000.0,
+      "value_at_risk_presence": 477700.0,
+      "value_at_risk_overlap": 88703.35,
+      "value_exposure_pct": 19.764
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 305,
+      "at_risk_count": 13,
+      "pct_at_risk": 4.262,
+      "total_assessed_value": 61598100.0,
+      "value_at_risk_presence": 3843400.0,
+      "value_at_risk_overlap": 877438.78,
+      "value_exposure_pct": 6.239
+    },
+    "Residential": {
+      "parcel_count": 1655,
+      "at_risk_count": 100,
+      "pct_at_risk": 6.042,
+      "total_assessed_value": 342725700.0,
+      "value_at_risk_presence": 23720600.0,
+      "value_at_risk_overlap": 4242187.83,
+      "value_exposure_pct": 6.921
+    },
+    "Commercial": {
+      "parcel_count": 44,
+      "at_risk_count": 2,
+      "pct_at_risk": 4.545,
+      "total_assessed_value": 13642800.0,
+      "value_at_risk_presence": 286300.0,
+      "value_at_risk_overlap": 29510.65,
+      "value_exposure_pct": 2.099
+    },
+    "ALL": {
+      "parcel_count": 2579,
+      "at_risk_count": 156,
+      "pct_at_risk": 6.049,
+      "total_assessed_value": 426700600.0,
+      "value_at_risk_presence": 28869300.0,
+      "value_at_risk_overlap": 5535431.0,
+      "value_exposure_pct": 6.766
+    }
+  },
+  "mun_name": "STILLWATER TWP",
+  "county_name": "SUSSEX"
+}

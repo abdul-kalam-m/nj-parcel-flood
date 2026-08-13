@@ -1,0 +1,199 @@
+{
+  "current": {
+    "Vacant": {
+      "parcel_count": 82,
+      "at_risk_count": 61,
+      "pct_at_risk": 74.39,
+      "total_assessed_value": 25712600.0,
+      "value_at_risk_presence": 20306800.0,
+      "value_at_risk_overlap": 19681167.33,
+      "value_exposure_pct": 78.976
+    },
+    "Other": {
+      "parcel_count": 627,
+      "at_risk_count": 426,
+      "pct_at_risk": 67.943,
+      "total_assessed_value": 2244800.0,
+      "value_at_risk_presence": 1430500.0,
+      "value_at_risk_overlap": 408530.49,
+      "value_exposure_pct": 63.725
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 143,
+      "at_risk_count": 98,
+      "pct_at_risk": 68.531,
+      "total_assessed_value": 143952700.0,
+      "value_at_risk_presence": 113174400.0,
+      "value_at_risk_overlap": 90625600.47,
+      "value_exposure_pct": 78.619
+    },
+    "Residential": {
+      "parcel_count": 2927,
+      "at_risk_count": 1720,
+      "pct_at_risk": 58.763,
+      "total_assessed_value": 1946987000.0,
+      "value_at_risk_presence": 1240679500.0,
+      "value_at_risk_overlap": 1181595424.64,
+      "value_exposure_pct": 63.723
+    },
+    "Commercial": {
+      "parcel_count": 192,
+      "at_risk_count": 55,
+      "pct_at_risk": 28.646,
+      "total_assessed_value": 129737100.0,
+      "value_at_risk_presence": 47119000.0,
+      "value_at_risk_overlap": 35702120.25,
+      "value_exposure_pct": 36.319
+    },
+    "Industrial": {
+      "parcel_count": 10,
+      "at_risk_count": 2,
+      "pct_at_risk": 20.0,
+      "total_assessed_value": 6405600.0,
+      "value_at_risk_presence": 1177500.0,
+      "value_at_risk_overlap": 630136.06,
+      "value_exposure_pct": 18.382
+    },
+    "ALL": {
+      "parcel_count": 3981,
+      "at_risk_count": 2362,
+      "pct_at_risk": 59.332,
+      "total_assessed_value": 2255039800.0,
+      "value_at_risk_presence": 1423887700.0,
+      "value_at_risk_overlap": 1328642979.23,
+      "value_exposure_pct": 63.142
+    }
+  },
+  "future": {
+    "Vacant": {
+      "parcel_count": 82,
+      "at_risk_count": 64,
+      "pct_at_risk": 78.049,
+      "total_assessed_value": 25712600.0,
+      "value_at_risk_presence": 21292700.0,
+      "value_at_risk_overlap": 21118954.51,
+      "value_exposure_pct": 82.81
+    },
+    "Residential": {
+      "parcel_count": 2927,
+      "at_risk_count": 2139,
+      "pct_at_risk": 73.078,
+      "total_assessed_value": 1946987000.0,
+      "value_at_risk_presence": 1507934400.0,
+      "value_at_risk_overlap": 1463592732.74,
+      "value_exposure_pct": 77.45
+    },
+    "Commercial": {
+      "parcel_count": 192,
+      "at_risk_count": 142,
+      "pct_at_risk": 73.958,
+      "total_assessed_value": 129737100.0,
+      "value_at_risk_presence": 93348500.0,
+      "value_at_risk_overlap": 80972969.32,
+      "value_exposure_pct": 71.952
+    },
+    "Industrial": {
+      "parcel_count": 10,
+      "at_risk_count": 9,
+      "pct_at_risk": 90.0,
+      "total_assessed_value": 6405600.0,
+      "value_at_risk_presence": 5063800.0,
+      "value_at_risk_overlap": 5061469.82,
+      "value_exposure_pct": 79.053
+    },
+    "Other": {
+      "parcel_count": 627,
+      "at_risk_count": 496,
+      "pct_at_risk": 79.107,
+      "total_assessed_value": 2244800.0,
+      "value_at_risk_presence": 2244800.0,
+      "value_at_risk_overlap": 1845170.91,
+      "value_exposure_pct": 100.0
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 143,
+      "at_risk_count": 107,
+      "pct_at_risk": 74.825,
+      "total_assessed_value": 143952700.0,
+      "value_at_risk_presence": 119915700.0,
+      "value_at_risk_overlap": 98415779.01,
+      "value_exposure_pct": 83.302
+    },
+    "ALL": {
+      "parcel_count": 3981,
+      "at_risk_count": 2957,
+      "pct_at_risk": 74.278,
+      "total_assessed_value": 2255039800.0,
+      "value_at_risk_presence": 1749799900.0,
+      "value_at_risk_overlap": 1671007076.31,
+      "value_exposure_pct": 77.595
+    }
+  },
+  "either": {
+    "Vacant": {
+      "parcel_count": 82,
+      "at_risk_count": 64,
+      "pct_at_risk": 78.049,
+      "total_assessed_value": 25712600.0,
+      "value_at_risk_presence": 21292700.0,
+      "value_at_risk_overlap": 21120697.57,
+      "value_exposure_pct": 82.81
+    },
+    "Other": {
+      "parcel_count": 627,
+      "at_risk_count": 498,
+      "pct_at_risk": 79.426,
+      "total_assessed_value": 2244800.0,
+      "value_at_risk_presence": 2244800.0,
+      "value_at_risk_overlap": 1845170.91,
+      "value_exposure_pct": 100.0
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 143,
+      "at_risk_count": 108,
+      "pct_at_risk": 75.524,
+      "total_assessed_value": 143952700.0,
+      "value_at_risk_presence": 120314400.0,
+      "value_at_risk_overlap": 98829223.66,
+      "value_exposure_pct": 83.579
+    },
+    "Residential": {
+      "parcel_count": 2927,
+      "at_risk_count": 2145,
+      "pct_at_risk": 73.283,
+      "total_assessed_value": 1946987000.0,
+      "value_at_risk_presence": 1511671800.0,
+      "value_at_risk_overlap": 1465232099.43,
+      "value_exposure_pct": 77.642
+    },
+    "Commercial": {
+      "parcel_count": 192,
+      "at_risk_count": 142,
+      "pct_at_risk": 73.958,
+      "total_assessed_value": 129737100.0,
+      "value_at_risk_presence": 93348500.0,
+      "value_at_risk_overlap": 81020516.17,
+      "value_exposure_pct": 71.952
+    },
+    "Industrial": {
+      "parcel_count": 10,
+      "at_risk_count": 9,
+      "pct_at_risk": 90.0,
+      "total_assessed_value": 6405600.0,
+      "value_at_risk_presence": 5063800.0,
+      "value_at_risk_overlap": 5061469.82,
+      "value_exposure_pct": 79.053
+    },
+    "ALL": {
+      "parcel_count": 3981,
+      "at_risk_count": 2966,
+      "pct_at_risk": 74.504,
+      "total_assessed_value": 2255039800.0,
+      "value_at_risk_presence": 1753936000.0,
+      "value_at_risk_overlap": 1673109177.56,
+      "value_exposure_pct": 77.778
+    }
+  },
+  "mun_name": "MANASQUAN BORO",
+  "county_name": "MONMOUTH"
+}

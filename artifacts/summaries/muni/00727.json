@@ -1,0 +1,199 @@
+{
+  "current": {
+    "Other": {
+      "parcel_count": 435,
+      "at_risk_count": 116,
+      "pct_at_risk": 26.667,
+      "total_assessed_value": 1353400.0,
+      "value_at_risk_presence": 391400.0,
+      "value_at_risk_overlap": 15502.27,
+      "value_exposure_pct": 28.92
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 504,
+      "at_risk_count": 89,
+      "pct_at_risk": 17.659,
+      "total_assessed_value": 648732100.0,
+      "value_at_risk_presence": 216491300.0,
+      "value_at_risk_overlap": 59230844.75,
+      "value_exposure_pct": 33.371
+    },
+    "Vacant": {
+      "parcel_count": 278,
+      "at_risk_count": 41,
+      "pct_at_risk": 14.748,
+      "total_assessed_value": 44067900.0,
+      "value_at_risk_presence": 16673300.0,
+      "value_at_risk_overlap": 13720918.09,
+      "value_exposure_pct": 37.835
+    },
+    "Residential": {
+      "parcel_count": 11253,
+      "at_risk_count": 233,
+      "pct_at_risk": 2.071,
+      "total_assessed_value": 3259154100.0,
+      "value_at_risk_presence": 89625000.0,
+      "value_at_risk_overlap": 34099819.63,
+      "value_exposure_pct": 2.75
+    },
+    "Industrial": {
+      "parcel_count": 233,
+      "at_risk_count": 28,
+      "pct_at_risk": 12.017,
+      "total_assessed_value": 957616900.0,
+      "value_at_risk_presence": 149560300.0,
+      "value_at_risk_overlap": 64166636.67,
+      "value_exposure_pct": 15.618
+    },
+    "Commercial": {
+      "parcel_count": 518,
+      "at_risk_count": 56,
+      "pct_at_risk": 10.811,
+      "total_assessed_value": 604140700.0,
+      "value_at_risk_presence": 121519700.0,
+      "value_at_risk_overlap": 74432349.55,
+      "value_exposure_pct": 20.114
+    },
+    "ALL": {
+      "parcel_count": 13221,
+      "at_risk_count": 563,
+      "pct_at_risk": 4.258,
+      "total_assessed_value": 5515065100.0,
+      "value_at_risk_presence": 594261000.0,
+      "value_at_risk_overlap": 245666070.95,
+      "value_exposure_pct": 10.775
+    }
+  },
+  "future": {
+    "Other": {
+      "parcel_count": 435,
+      "at_risk_count": 129,
+      "pct_at_risk": 29.655,
+      "total_assessed_value": 1353400.0,
+      "value_at_risk_presence": 364000.0,
+      "value_at_risk_overlap": 112585.46,
+      "value_exposure_pct": 26.895
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 504,
+      "at_risk_count": 100,
+      "pct_at_risk": 19.841,
+      "total_assessed_value": 648732100.0,
+      "value_at_risk_presence": 259412000.0,
+      "value_at_risk_overlap": 74226735.09,
+      "value_exposure_pct": 39.988
+    },
+    "Vacant": {
+      "parcel_count": 278,
+      "at_risk_count": 54,
+      "pct_at_risk": 19.424,
+      "total_assessed_value": 44067900.0,
+      "value_at_risk_presence": 17658300.0,
+      "value_at_risk_overlap": 16602169.78,
+      "value_exposure_pct": 40.071
+    },
+    "Residential": {
+      "parcel_count": 11253,
+      "at_risk_count": 494,
+      "pct_at_risk": 4.39,
+      "total_assessed_value": 3259154100.0,
+      "value_at_risk_presence": 177918900.0,
+      "value_at_risk_overlap": 98626940.64,
+      "value_exposure_pct": 5.459
+    },
+    "Industrial": {
+      "parcel_count": 233,
+      "at_risk_count": 64,
+      "pct_at_risk": 27.468,
+      "total_assessed_value": 957616900.0,
+      "value_at_risk_presence": 292544200.0,
+      "value_at_risk_overlap": 168287454.54,
+      "value_exposure_pct": 30.549
+    },
+    "Commercial": {
+      "parcel_count": 518,
+      "at_risk_count": 84,
+      "pct_at_risk": 16.216,
+      "total_assessed_value": 604140700.0,
+      "value_at_risk_presence": 186387100.0,
+      "value_at_risk_overlap": 133182566.32,
+      "value_exposure_pct": 30.852
+    },
+    "ALL": {
+      "parcel_count": 13221,
+      "at_risk_count": 925,
+      "pct_at_risk": 6.996,
+      "total_assessed_value": 5515065100.0,
+      "value_at_risk_presence": 934284500.0,
+      "value_at_risk_overlap": 491038451.83,
+      "value_exposure_pct": 16.941
+    }
+  },
+  "either": {
+    "Other": {
+      "parcel_count": 435,
+      "at_risk_count": 135,
+      "pct_at_risk": 31.034,
+      "total_assessed_value": 1353400.0,
+      "value_at_risk_presence": 585400.0,
+      "value_at_risk_overlap": 122871.38,
+      "value_exposure_pct": 43.254
+    },
+    "Vacant": {
+      "parcel_count": 278,
+      "at_risk_count": 56,
+      "pct_at_risk": 20.144,
+      "total_assessed_value": 44067900.0,
+      "value_at_risk_presence": 17745100.0,
+      "value_at_risk_overlap": 16662768.5,
+      "value_exposure_pct": 40.268
+    },
+    "Industrial": {
+      "parcel_count": 233,
+      "at_risk_count": 66,
+      "pct_at_risk": 28.326,
+      "total_assessed_value": 957616900.0,
+      "value_at_risk_presence": 312598200.0,
+      "value_at_risk_overlap": 172109296.51,
+      "value_exposure_pct": 32.643
+    },
+    "Commercial": {
+      "parcel_count": 518,
+      "at_risk_count": 91,
+      "pct_at_risk": 17.568,
+      "total_assessed_value": 604140700.0,
+      "value_at_risk_presence": 196029600.0,
+      "value_at_risk_overlap": 135963012.91,
+      "value_exposure_pct": 32.448
+    },
+    "Residential": {
+      "parcel_count": 11253,
+      "at_risk_count": 529,
+      "pct_at_risk": 4.701,
+      "total_assessed_value": 3259154100.0,
+      "value_at_risk_presence": 189916400.0,
+      "value_at_risk_overlap": 103253186.53,
+      "value_exposure_pct": 5.827
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 504,
+      "at_risk_count": 112,
+      "pct_at_risk": 22.222,
+      "total_assessed_value": 648732100.0,
+      "value_at_risk_presence": 295196900.0,
+      "value_at_risk_overlap": 82468993.22,
+      "value_exposure_pct": 45.504
+    },
+    "ALL": {
+      "parcel_count": 13221,
+      "at_risk_count": 989,
+      "pct_at_risk": 7.481,
+      "total_assessed_value": 5515065100.0,
+      "value_at_risk_presence": 1012071600.0,
+      "value_at_risk_overlap": 510580129.05,
+      "value_exposure_pct": 18.351
+    }
+  },
+  "mun_name": "PENNSAUKEN TWP",
+  "county_name": "CAMDEN"
+}

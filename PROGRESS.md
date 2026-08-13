@@ -5,6 +5,130 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Phase 5 (§11): geography × class × lens aggregates, statewide (agent: sonnet-5)
+
+**⚠ Phase-numbering correction first:** the two entries below this one label
+`04_claims.py` and `05_score.py` as separate "Phase 4"/"Phase 5". That's
+wrong against the guide's own §11 table, which bundles both scripts as one
+phase ("4. Claims + scores") and lists `06_aggregate.py` -- this entry --
+as "5. Aggregates". Not editing those entries (append-only log), correcting
+here: this is guide-Phase 5, and the next script (`07_tiles.py`, tiles +
+search index) is guide-Phase 6, not whatever came after this one gets
+called next. Caught while re-reading §11 in full before starting this
+phase's work, rather than continuing to extend the mislabeling forward.
+
+**Done:**
+- Implemented `06_aggregate.py` (§5.5): county/muni/class-group already
+  exist on `parcel_master` (Phase 1) -- no new spatial join needed here,
+  unlike Phase 4's tract assignment. `mun_code` (PCL_MUN), not `mun_name`,
+  is the muni grouping key -- `mun_name` is blank for the same ~11.7% of
+  parcels Phase 1's join-rate finding already covers (it's populated from
+  the same MOD-IV join), while `mun_code` is always populated. Verified
+  live that all 564 `mun_code` values have a derivable name via majority
+  vote among matched parcels (one single-record naming inconsistency
+  found statewide, correctly resolved by the vote, not a real ambiguity).
+- Risk lenses (current/future/either, §5.5) map onto §5.2's already-defined
+  flags. **The `future` lens excludes non-P4-covered parcels from both
+  the numerator and denominator entirely** -- not counted as "not at risk"
+  -- so a county with partial P4 coverage doesn't get a silently-diluted
+  future-risk percentage; a county with *zero* covered parcels correctly
+  produces no future-lens row at all rather than a misleading 0/0.
+  `either`'s overlap fraction (for the overlap-based value-at-risk
+  companion metric) uses `GREATEST(sfha_pct, fut_pct)` where covered --
+  the guide doesn't spell out a combined-lens overlap fraction explicitly,
+  so this is a documented interpretation (§13.2), not a literal formula
+  quote.
+- Used DuckDB for the actual aggregation (per §6.2/§6.3's explicit tooling
+  choice) via a "lensed" long-format view (one row per parcel×lens) so one
+  GROUP BY query handles all three lenses uniformly; combining
+  `parcel_master`+`parcel_scores` beforehand is still done in pandas with
+  the same row-position verification as Phase 5/`05_score.py` (exact pin-
+  sequence equality asserted per county), since a SQL join on `pin` would
+  have the same duplicate-PIN correctness risk already documented twice.
+- **Found and fixed two real bugs by actually running this against the
+  full statewide dataset, not just trusting the design:**
+  1. A SQL binder error on the very first run (rollup query selected
+     `class_group` without it being in `GROUP BY` or aggregated) --
+     trivial to fix, caught immediately by DuckDB itself refusing to run it.
+  2. **A much more serious bug in the QA check meant to catch exactly this
+     class of problem**: `check_rollup_invariant`'s first version grouped
+     municipalities by `(class_group, lens)` only, forgetting `county`
+     entirely -- so every county's rollup was being compared against a
+     *statewide* sum of all 564 municipalities, not just its own. First
+     real run "found" 2,265 violations, all wildly inflated (some >100,000%
+     off) -- the absurd magnitude was itself the tell that the *check* was
+     broken, not the aggregation. Fixed by attaching a `county` column to
+     the muni-level frame (built once from a verified 1:1 `mun_code`→
+     `county` mapping) and grouping by it too. Added a dedicated regression
+     test that reproduces the exact bug (mislabels one municipality into
+     the wrong county) and asserts the fixed checker actually catches it --
+     not just that it passes on good data.
+  3. **A real deviation from §7.1's artifact naming, found during
+     independent verification, not by the rollup check**: county summary
+     files were being written as `{county name}.json` (e.g.
+     `ATLANTIC.json`) because the aggregation groups by `combined`'s own
+     `county` column, which holds the name (Phase 1's schema). §7.1 wants
+     `summaries/county/{fips}.json`. Fixed by translating name->FIPS only
+     at file-write time via the existing `COUNTY_FIPS` lookup, leaving the
+     aggregation SQL untouched. Municipality files needed the same fix for
+     `{fips}{mun}.json` -- verified live first that `mun_code`'s own last-2-
+     digit suffix is unique *within* every county (no collisions) before
+     using `{county FIPS}{mun_code suffix}` as the muni file key.
+- Added `pipeline/tests/test_aggregate.py` (8 offline tests, in-memory
+  DuckDB + a tiny 4-parcel/2-county synthetic fixture, hand-computed
+  expected values): the mun_name majority-vote lookup, per-lens semantics
+  verified against hand math (including the future-lens exclusion and the
+  either-lens GREATEST rule), the class-group-rollup-plus-per-class
+  co-existence, and both a rollup-invariant pass case and the specific
+  regression case above. Full suite: **73/73 passing** (65 from Phases 1-4b
+  + 8 new).
+- Ran statewide: **3,478,722 parcels aggregated, 564 municipalities.**
+  Rollup invariant (§11 gate): **PASS**, re-verified independently by
+  recomputing one county (Salem) directly from the raw parquet files in
+  plain pandas (no DuckDB, no reuse of this script's own functions) and
+  matching the written JSON exactly; muni-file count (564) and the ranked-
+  municipality table's total (564 across all 21 counties, no drops or
+  duplicates) both checked directly.
+- Statewide, either lens, all classes: **671,829/3,478,722 parcels at risk
+  (19.31%)**, value exposure **25.86%**. By class group: "Other"
+  (rail/utility/misc) has both the highest at-risk share (31.22%) and by
+  far the highest value exposure (71.69%) -- plausible, since utility/
+  infrastructure siting is often water-adjacent for practical reasons, not
+  a red flag. Residential is lowest on both (15.90% / 21.15%) -- also
+  plausible given it's the most widespread, least water-concentrated class.
+
+**Decisions (§13.2):**
+- `either` lens's overlap fraction = `GREATEST(sfha_pct, fut_pct)` where
+  future-covered, else just `sfha_pct` -- documented above, flagging since
+  §5.5 doesn't spell out a combined-lens formula explicitly.
+- Ranked-municipality table (§7.2) built on the either-lens, all-classes
+  rollup specifically -- the guide's UI description doesn't pin down which
+  lens/class scope "ranked municipalities" uses; either/ALL is the
+  broadest, most general "which towns are most at risk" framing.
+
+**⚠ Deviations / open items:**
+- The Phase 1 join-rate limitation (88.34% vs required ≥97%) is still
+  carried forward unresolved, per the owner's 2026-08-12 direction.
+- Muni summary JSON carries `county_name` (human-readable) alongside its
+  data; the exact `{fips}{mun}` key format is this session's best
+  reconciliation of §7.1's naming with what Phase 1's schema actually
+  provides (`mun_code`/PCL_MUN, not a FIPS-native muni code) -- worth a
+  quick sanity check against whatever Phase 6 (tiles/search index) and
+  Phase 7 (web app) actually expect when they're built, in case either
+  assumes a different muni-key convention.
+- `artifacts/summaries/` and `artifacts/ranked_municipalities.json` ARE
+  committed (small, aggregate-only JSON, matches §8's "artifacts/ small
+  committed JSON" convention) -- these are the first Phase-6-onward
+  artifacts actually committed to the repo, unlike the gitignored
+  per-parcel `data/processed/parcel_*/` outputs from every prior phase.
+
+**Next:** Guide-Phase 6 (`07_tiles.py` + `08_search_index.py`) -- GeoJSONL
+→ tippecanoe → PMTiles, and per-muni search shards. First phase needing the
+tippecanoe route decided back in Phase 0 (Docker, confirmed working) and
+R2 upload/CORS (§6.2/§7.1).
+
+---
+
 ## 2026-08-13 — Phase 5: composite score + bands, statewide (agent: sonnet-5)
 
 Pure computation (§5.3) over Phases 1/3/4's already-computed outputs -- no

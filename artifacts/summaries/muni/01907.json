@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Public/Institutional/Exempt": {
+      "parcel_count": 167,
+      "at_risk_count": 81,
+      "pct_at_risk": 48.503,
+      "total_assessed_value": 40144000.0,
+      "value_at_risk_presence": 12829100.0,
+      "value_at_risk_overlap": 3845898.33,
+      "value_exposure_pct": 31.958
+    },
+    "Commercial": {
+      "parcel_count": 24,
+      "at_risk_count": 3,
+      "pct_at_risk": 12.5,
+      "total_assessed_value": 12519300.0,
+      "value_at_risk_presence": 1614700.0,
+      "value_at_risk_overlap": 437210.73,
+      "value_exposure_pct": 12.898
+    },
+    "Residential": {
+      "parcel_count": 1383,
+      "at_risk_count": 145,
+      "pct_at_risk": 10.484,
+      "total_assessed_value": 555718900.0,
+      "value_at_risk_presence": 55228000.0,
+      "value_at_risk_overlap": 14019476.36,
+      "value_exposure_pct": 9.938
+    },
+    "Farm/Agricultural": {
+      "parcel_count": 624,
+      "at_risk_count": 114,
+      "pct_at_risk": 18.269,
+      "total_assessed_value": 6843100.0,
+      "value_at_risk_presence": 1347400.0,
+      "value_at_risk_overlap": 161832.37,
+      "value_exposure_pct": 19.69
+    },
+    "Vacant": {
+      "parcel_count": 99,
+      "at_risk_count": 32,
+      "pct_at_risk": 32.323,
+      "total_assessed_value": 3820300.0,
+      "value_at_risk_presence": 618700.0,
+      "value_at_risk_overlap": 250589.35,
+      "value_exposure_pct": 16.195
+    },
+    "Other": {
+      "parcel_count": 43,
+      "at_risk_count": 5,
+      "pct_at_risk": 11.628,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "ALL": {
+      "parcel_count": 2340,
+      "at_risk_count": 380,
+      "pct_at_risk": 16.239,
+      "total_assessed_value": 619045600.0,
+      "value_at_risk_presence": 71637900.0,
+      "value_at_risk_overlap": 18715007.14,
+      "value_exposure_pct": 11.572
+    }
+  },
+  "either": {
+    "Public/Institutional/Exempt": {
+      "parcel_count": 167,
+      "at_risk_count": 81,
+      "pct_at_risk": 48.503,
+      "total_assessed_value": 40144000.0,
+      "value_at_risk_presence": 12829100.0,
+      "value_at_risk_overlap": 3845898.33,
+      "value_exposure_pct": 31.958
+    },
+    "Residential": {
+      "parcel_count": 1383,
+      "at_risk_count": 145,
+      "pct_at_risk": 10.484,
+      "total_assessed_value": 555718900.0,
+      "value_at_risk_presence": 55228000.0,
+      "value_at_risk_overlap": 14019476.36,
+      "value_exposure_pct": 9.938
+    },
+    "Other": {
+      "parcel_count": 43,
+      "at_risk_count": 5,
+      "pct_at_risk": 11.628,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Commercial": {
+      "parcel_count": 24,
+      "at_risk_count": 3,
+      "pct_at_risk": 12.5,
+      "total_assessed_value": 12519300.0,
+      "value_at_risk_presence": 1614700.0,
+      "value_at_risk_overlap": 437210.73,
+      "value_exposure_pct": 12.898
+    },
+    "Farm/Agricultural": {
+      "parcel_count": 624,
+      "at_risk_count": 114,
+      "pct_at_risk": 18.269,
+      "total_assessed_value": 6843100.0,
+      "value_at_risk_presence": 1347400.0,
+      "value_at_risk_overlap": 161832.37,
+      "value_exposure_pct": 19.69
+    },
+    "Vacant": {
+      "parcel_count": 99,
+      "at_risk_count": 32,
+      "pct_at_risk": 32.323,
+      "total_assessed_value": 3820300.0,
+      "value_at_risk_presence": 618700.0,
+      "value_at_risk_overlap": 250589.35,
+      "value_exposure_pct": 16.195
+    },
+    "ALL": {
+      "parcel_count": 2340,
+      "at_risk_count": 380,
+      "pct_at_risk": 16.239,
+      "total_assessed_value": 619045600.0,
+      "value_at_risk_presence": 71637900.0,
+      "value_at_risk_overlap": 18715007.14,
+      "value_exposure_pct": 11.572
+    }
+  },
+  "mun_name": "DELAWARE TWP",
+  "county_name": "HUNTERDON"
+}

@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Residential": {
+      "parcel_count": 5455,
+      "at_risk_count": 109,
+      "pct_at_risk": 1.998,
+      "total_assessed_value": 2180462500.0,
+      "value_at_risk_presence": 42016400.0,
+      "value_at_risk_overlap": 17421693.16,
+      "value_exposure_pct": 1.927
+    },
+    "Commercial": {
+      "parcel_count": 295,
+      "at_risk_count": 46,
+      "pct_at_risk": 15.593,
+      "total_assessed_value": 256442500.0,
+      "value_at_risk_presence": 63426000.0,
+      "value_at_risk_overlap": 25814142.48,
+      "value_exposure_pct": 24.733
+    },
+    "Industrial": {
+      "parcel_count": 115,
+      "at_risk_count": 27,
+      "pct_at_risk": 23.478,
+      "total_assessed_value": 178250900.0,
+      "value_at_risk_presence": 46882800.0,
+      "value_at_risk_overlap": 12743770.92,
+      "value_exposure_pct": 26.302
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 175,
+      "at_risk_count": 22,
+      "pct_at_risk": 12.571,
+      "total_assessed_value": 221973200.0,
+      "value_at_risk_presence": 83998700.0,
+      "value_at_risk_overlap": 40222755.19,
+      "value_exposure_pct": 37.842
+    },
+    "Other": {
+      "parcel_count": 261,
+      "at_risk_count": 45,
+      "pct_at_risk": 17.241,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Vacant": {
+      "parcel_count": 91,
+      "at_risk_count": 15,
+      "pct_at_risk": 16.484,
+      "total_assessed_value": 7526800.0,
+      "value_at_risk_presence": 1735900.0,
+      "value_at_risk_overlap": 854172.8,
+      "value_exposure_pct": 23.063
+    },
+    "ALL": {
+      "parcel_count": 6392,
+      "at_risk_count": 264,
+      "pct_at_risk": 4.13,
+      "total_assessed_value": 2844655900.0,
+      "value_at_risk_presence": 238059800.0,
+      "value_at_risk_overlap": 97056534.56,
+      "value_exposure_pct": 8.369
+    }
+  },
+  "either": {
+    "Residential": {
+      "parcel_count": 5455,
+      "at_risk_count": 109,
+      "pct_at_risk": 1.998,
+      "total_assessed_value": 2180462500.0,
+      "value_at_risk_presence": 42016400.0,
+      "value_at_risk_overlap": 17421693.16,
+      "value_exposure_pct": 1.927
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 175,
+      "at_risk_count": 22,
+      "pct_at_risk": 12.571,
+      "total_assessed_value": 221973200.0,
+      "value_at_risk_presence": 83998700.0,
+      "value_at_risk_overlap": 40222755.19,
+      "value_exposure_pct": 37.842
+    },
+    "Other": {
+      "parcel_count": 261,
+      "at_risk_count": 45,
+      "pct_at_risk": 17.241,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Commercial": {
+      "parcel_count": 295,
+      "at_risk_count": 46,
+      "pct_at_risk": 15.593,
+      "total_assessed_value": 256442500.0,
+      "value_at_risk_presence": 63426000.0,
+      "value_at_risk_overlap": 25814142.48,
+      "value_exposure_pct": 24.733
+    },
+    "Industrial": {
+      "parcel_count": 115,
+      "at_risk_count": 27,
+      "pct_at_risk": 23.478,
+      "total_assessed_value": 178250900.0,
+      "value_at_risk_presence": 46882800.0,
+      "value_at_risk_overlap": 12743770.92,
+      "value_exposure_pct": 26.302
+    },
+    "Vacant": {
+      "parcel_count": 91,
+      "at_risk_count": 15,
+      "pct_at_risk": 16.484,
+      "total_assessed_value": 7526800.0,
+      "value_at_risk_presence": 1735900.0,
+      "value_at_risk_overlap": 854172.8,
+      "value_exposure_pct": 23.063
+    },
+    "ALL": {
+      "parcel_count": 6392,
+      "at_risk_count": 264,
+      "pct_at_risk": 4.13,
+      "total_assessed_value": 2844655900.0,
+      "value_at_risk_presence": 238059800.0,
+      "value_at_risk_overlap": 97056534.56,
+      "value_exposure_pct": 8.369
+    }
+  },
+  "mun_name": "HAWTHORNE BORO",
+  "county_name": "PASSAIC"
+}

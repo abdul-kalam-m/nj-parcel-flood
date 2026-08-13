@@ -1,0 +1,172 @@
+{
+  "current": {
+    "Vacant": {
+      "parcel_count": 14,
+      "at_risk_count": 4,
+      "pct_at_risk": 28.571,
+      "total_assessed_value": 260600.0,
+      "value_at_risk_presence": 135500.0,
+      "value_at_risk_overlap": 112415.64,
+      "value_exposure_pct": 51.995
+    },
+    "Other": {
+      "parcel_count": 31,
+      "at_risk_count": 13,
+      "pct_at_risk": 41.935,
+      "total_assessed_value": 23300.0,
+      "value_at_risk_presence": 23300.0,
+      "value_at_risk_overlap": 11727.56,
+      "value_exposure_pct": 100.0
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 38,
+      "at_risk_count": 25,
+      "pct_at_risk": 65.789,
+      "total_assessed_value": 6438100.0,
+      "value_at_risk_presence": 2027100.0,
+      "value_at_risk_overlap": 1595760.34,
+      "value_exposure_pct": 31.486
+    },
+    "Residential": {
+      "parcel_count": 876,
+      "at_risk_count": 212,
+      "pct_at_risk": 24.201,
+      "total_assessed_value": 62174900.0,
+      "value_at_risk_presence": 13808500.0,
+      "value_at_risk_overlap": 11393515.59,
+      "value_exposure_pct": 22.209
+    },
+    "Commercial": {
+      "parcel_count": 31,
+      "at_risk_count": 11,
+      "pct_at_risk": 35.484,
+      "total_assessed_value": 5248100.0,
+      "value_at_risk_presence": 2334300.0,
+      "value_at_risk_overlap": 895812.7,
+      "value_exposure_pct": 44.479
+    },
+    "ALL": {
+      "parcel_count": 990,
+      "at_risk_count": 265,
+      "pct_at_risk": 26.768,
+      "total_assessed_value": 74145000.0,
+      "value_at_risk_presence": 18328700.0,
+      "value_at_risk_overlap": 14009231.82,
+      "value_exposure_pct": 24.72
+    }
+  },
+  "future": {
+    "Vacant": {
+      "parcel_count": 14,
+      "at_risk_count": 5,
+      "pct_at_risk": 35.714,
+      "total_assessed_value": 260600.0,
+      "value_at_risk_presence": 135500.0,
+      "value_at_risk_overlap": 135280.17,
+      "value_exposure_pct": 51.995
+    },
+    "Residential": {
+      "parcel_count": 876,
+      "at_risk_count": 459,
+      "pct_at_risk": 52.397,
+      "total_assessed_value": 62174900.0,
+      "value_at_risk_presence": 32021200.0,
+      "value_at_risk_overlap": 25101470.38,
+      "value_exposure_pct": 51.502
+    },
+    "Commercial": {
+      "parcel_count": 31,
+      "at_risk_count": 13,
+      "pct_at_risk": 41.935,
+      "total_assessed_value": 5248100.0,
+      "value_at_risk_presence": 3139300.0,
+      "value_at_risk_overlap": 2002988.0,
+      "value_exposure_pct": 59.818
+    },
+    "Other": {
+      "parcel_count": 31,
+      "at_risk_count": 15,
+      "pct_at_risk": 48.387,
+      "total_assessed_value": 23300.0,
+      "value_at_risk_presence": 23300.0,
+      "value_at_risk_overlap": 22104.15,
+      "value_exposure_pct": 100.0
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 38,
+      "at_risk_count": 26,
+      "pct_at_risk": 68.421,
+      "total_assessed_value": 6438100.0,
+      "value_at_risk_presence": 2033400.0,
+      "value_at_risk_overlap": 2007442.34,
+      "value_exposure_pct": 31.584
+    },
+    "ALL": {
+      "parcel_count": 990,
+      "at_risk_count": 518,
+      "pct_at_risk": 52.323,
+      "total_assessed_value": 74145000.0,
+      "value_at_risk_presence": 37352700.0,
+      "value_at_risk_overlap": 29269285.04,
+      "value_exposure_pct": 50.378
+    }
+  },
+  "either": {
+    "Vacant": {
+      "parcel_count": 14,
+      "at_risk_count": 5,
+      "pct_at_risk": 35.714,
+      "total_assessed_value": 260600.0,
+      "value_at_risk_presence": 135500.0,
+      "value_at_risk_overlap": 135280.17,
+      "value_exposure_pct": 51.995
+    },
+    "Other": {
+      "parcel_count": 31,
+      "at_risk_count": 15,
+      "pct_at_risk": 48.387,
+      "total_assessed_value": 23300.0,
+      "value_at_risk_presence": 23300.0,
+      "value_at_risk_overlap": 22104.15,
+      "value_exposure_pct": 100.0
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 38,
+      "at_risk_count": 26,
+      "pct_at_risk": 68.421,
+      "total_assessed_value": 6438100.0,
+      "value_at_risk_presence": 2033400.0,
+      "value_at_risk_overlap": 2007442.34,
+      "value_exposure_pct": 31.584
+    },
+    "Residential": {
+      "parcel_count": 876,
+      "at_risk_count": 459,
+      "pct_at_risk": 52.397,
+      "total_assessed_value": 62174900.0,
+      "value_at_risk_presence": 32021200.0,
+      "value_at_risk_overlap": 25101471.64,
+      "value_exposure_pct": 51.502
+    },
+    "Commercial": {
+      "parcel_count": 31,
+      "at_risk_count": 13,
+      "pct_at_risk": 41.935,
+      "total_assessed_value": 5248100.0,
+      "value_at_risk_presence": 3139300.0,
+      "value_at_risk_overlap": 2002988.0,
+      "value_exposure_pct": 59.818
+    },
+    "ALL": {
+      "parcel_count": 990,
+      "at_risk_count": 518,
+      "pct_at_risk": 52.323,
+      "total_assessed_value": 74145000.0,
+      "value_at_risk_presence": 37352700.0,
+      "value_at_risk_overlap": 29269286.3,
+      "value_exposure_pct": 50.378
+    }
+  },
+  "mun_name": "WOODLYNNE BORO",
+  "county_name": "CAMDEN"
+}

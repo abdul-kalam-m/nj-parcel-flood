@@ -1,0 +1,134 @@
+{
+  "current": {
+    "Vacant": {
+      "parcel_count": 111,
+      "at_risk_count": 3,
+      "pct_at_risk": 2.703,
+      "total_assessed_value": 51327000.0,
+      "value_at_risk_presence": 41700.0,
+      "value_at_risk_overlap": 8782.9,
+      "value_exposure_pct": 0.081
+    },
+    "Commercial": {
+      "parcel_count": 159,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 724544470.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Industrial": {
+      "parcel_count": 96,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 232582200.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 286,
+      "at_risk_count": 24,
+      "pct_at_risk": 8.392,
+      "total_assessed_value": 118170100.0,
+      "value_at_risk_presence": 1766600.0,
+      "value_at_risk_overlap": 1236038.59,
+      "value_exposure_pct": 1.495
+    },
+    "Other": {
+      "parcel_count": 59,
+      "at_risk_count": 1,
+      "pct_at_risk": 1.695,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Residential": {
+      "parcel_count": 4224,
+      "at_risk_count": 1,
+      "pct_at_risk": 0.024,
+      "total_assessed_value": 1573931200.0,
+      "value_at_risk_presence": 381300.0,
+      "value_at_risk_overlap": 15970.72,
+      "value_exposure_pct": 0.024
+    },
+    "ALL": {
+      "parcel_count": 4935,
+      "at_risk_count": 29,
+      "pct_at_risk": 0.588,
+      "total_assessed_value": 2700554970.0,
+      "value_at_risk_presence": 2189600.0,
+      "value_at_risk_overlap": 1260792.21,
+      "value_exposure_pct": 0.081
+    }
+  },
+  "either": {
+    "Vacant": {
+      "parcel_count": 111,
+      "at_risk_count": 3,
+      "pct_at_risk": 2.703,
+      "total_assessed_value": 51327000.0,
+      "value_at_risk_presence": 41700.0,
+      "value_at_risk_overlap": 8782.9,
+      "value_exposure_pct": 0.081
+    },
+    "Residential": {
+      "parcel_count": 4224,
+      "at_risk_count": 1,
+      "pct_at_risk": 0.024,
+      "total_assessed_value": 1573931200.0,
+      "value_at_risk_presence": 381300.0,
+      "value_at_risk_overlap": 15970.72,
+      "value_exposure_pct": 0.024
+    },
+    "Industrial": {
+      "parcel_count": 96,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 232582200.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Commercial": {
+      "parcel_count": 159,
+      "at_risk_count": 0,
+      "pct_at_risk": 0.0,
+      "total_assessed_value": 724544470.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": 0.0
+    },
+    "Other": {
+      "parcel_count": 59,
+      "at_risk_count": 1,
+      "pct_at_risk": 1.695,
+      "total_assessed_value": 0.0,
+      "value_at_risk_presence": 0.0,
+      "value_at_risk_overlap": 0.0,
+      "value_exposure_pct": null
+    },
+    "Public/Institutional/Exempt": {
+      "parcel_count": 286,
+      "at_risk_count": 24,
+      "pct_at_risk": 8.392,
+      "total_assessed_value": 118170100.0,
+      "value_at_risk_presence": 1766600.0,
+      "value_at_risk_overlap": 1236038.59,
+      "value_exposure_pct": 1.495
+    },
+    "ALL": {
+      "parcel_count": 4935,
+      "at_risk_count": 29,
+      "pct_at_risk": 0.588,
+      "total_assessed_value": 2700554970.0,
+      "value_at_risk_presence": 2189600.0,
+      "value_at_risk_overlap": 1260792.21,
+      "value_exposure_pct": 0.081
+    }
+  },
+  "mun_name": "EAST HANOVER TWP",
+  "county_name": "MORRIS"
+}
