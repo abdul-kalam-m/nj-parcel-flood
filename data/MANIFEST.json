@@ -1,44 +1,44 @@
 {
   "recon_P1": {
     "source_url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
-    "retrieved_utc": "2026-08-12T05:11:40.177941+00:00",
+    "retrieved_utc": "2026-08-13T05:12:47.759965+00:00",
     "license_note": "public government/open data source (see RECON.md for full terms)",
     "ok_at_recon": true,
-    "checked_utc": "2026-08-12T05:11:40.175741+00:00"
+    "checked_utc": "2026-08-13T05:12:47.757451+00:00"
   },
   "recon_P3": {
     "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer",
-    "retrieved_utc": "2026-08-12T05:11:40.178743+00:00",
+    "retrieved_utc": "2026-08-13T05:12:47.762318+00:00",
     "license_note": "public government/open data source (see RECON.md for full terms)",
     "ok_at_recon": true,
-    "checked_utc": "2026-08-12T05:11:40.178743+00:00"
+    "checked_utc": "2026-08-13T05:12:47.760969+00:00"
   },
   "recon_P4": {
     "source_url": "https://mapsdep.nj.gov/arcgis/rest/services/Features/Hydrography/MapServer/48",
-    "retrieved_utc": "2026-08-12T05:11:40.179908+00:00",
+    "retrieved_utc": "2026-08-13T05:12:47.762318+00:00",
     "license_note": "public government/open data source (see RECON.md for full terms)",
     "ok_at_recon": true,
-    "checked_utc": "2026-08-12T05:11:40.179908+00:00"
+    "checked_utc": "2026-08-13T05:12:47.762318+00:00"
   },
   "recon_P7": {
     "source_url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer",
-    "retrieved_utc": "2026-08-12T05:11:40.181023+00:00",
+    "retrieved_utc": "2026-08-13T05:12:47.763410+00:00",
     "license_note": "public government/open data source (see RECON.md for full terms)",
     "ok_at_recon": true,
-    "checked_utc": "2026-08-12T05:11:40.181023+00:00"
+    "checked_utc": "2026-08-13T05:12:47.763410+00:00"
   },
   "recon_P8": {
     "source_url": "https://geo.nj.gov/arcgis/rest/services/Tasks/NJ_Geocode/GeocodeServer",
-    "retrieved_utc": "2026-08-12T05:11:40.182025+00:00",
+    "retrieved_utc": "2026-08-13T05:12:47.764424+00:00",
     "license_note": "public government/open data source (see RECON.md for full terms)",
     "ok_at_recon": true,
-    "checked_utc": "2026-08-12T05:11:40.181023+00:00"
+    "checked_utc": "2026-08-13T05:12:47.763410+00:00"
   },
   "recon_P9": {
     "source_url": "https://tiles.openfreemap.org/styles/liberty",
-    "retrieved_utc": "2026-08-12T05:11:40.182025+00:00",
+    "retrieved_utc": "2026-08-13T05:12:47.764424+00:00",
     "license_note": "public government/open data source (see RECON.md for full terms)",
     "ok_at_recon": true,
-    "checked_utc": "2026-08-12T05:11:40.182025+00:00"
+    "checked_utc": "2026-08-13T05:12:47.764424+00:00"
   }
 }

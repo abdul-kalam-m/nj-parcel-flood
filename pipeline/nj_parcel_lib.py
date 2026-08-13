@@ -82,19 +82,23 @@ P4_COASTAL_COUNTIES = [
     "SALEM", "UNION",
 ]
 
-# P6: OpenFEMA FIMA NFIP Redacted Claims. CONFIRMED UNAVAILABLE 2026-08-02: the
-# live query endpoint returns HTTP 503 ("FEMA.gov is experiencing technical
-# difficulties"); the dataset-metadata endpoint (a different, working endpoint)
-# confirms lastRefresh 2025-12-19 and describes bulk CSV/parquet exports as the
-# distribution mechanism, but those bulk URLs 403 (Akamai) to a plain requests
-# call too. Independently corroborated by public reporting that FimaNfipClaims/
-# FimaNfipPolicies access was suspended. Treat as unavailable until Phase 1/2
-# re-check -- guide's own fallback applies (§5.3: redistribute C_loss's weight,
-# record the variant in meta.json). Do not build around a retry-until-it-works
-# assumption; this needs a human check-in if it matters before launch.
+# P6: OpenFEMA NFIP Redacted Claims. CONFIRMED UNAVAILABLE 2026-08-02 (the old
+# v2 FimaNfipClaims query endpoint returned HTTP 503) -- RE-CHECKED LIVE
+# 2026-08-13 and the picture changed: the v2 endpoint now responds (200), but
+# its own response body carries a DeprecationInformation block -- data frozen
+# as of 2026-06-01, the dataset itself removed 2026-10-15, "the FIMA prefix
+# was removed" from its replacement's name. Confirmed the actual replacement
+# live: `NfipClaims` v3 (note: no "Fima" prefix), lastDataSetRefresh 9 days
+# before this check (actively maintained, not another dead end). Sample NJ
+# record has a 12-digit `censusGeoid` (block-group level -- truncate to 11
+# digits for the §5.2 tract-level key) and a plausible `countyCode`/
+# `nfipCommunityName`/`reportedZipCode` -- real, usable data, not a stub.
+# Use the v3 URL below for all Phase 4 work; the v2 URL is kept only as a
+# comment for provenance, not referenced anywhere in code.
+# (v2, deprecated, DO NOT USE: https://www.fema.gov/api/open/v2/FimaNfipClaims)
 P6_CLAIMS_METADATA_URL = "https://www.fema.gov/api/open/v1/OpenFemaDataSets"
-P6_CLAIMS_QUERY_URL = "https://www.fema.gov/api/open/v2/FimaNfipClaims"
-P6_STATUS_KNOWN_UNAVAILABLE = True
+P6_CLAIMS_QUERY_URL = "https://www.fema.gov/api/open/v3/NfipClaims"
+P6_STATUS_KNOWN_UNAVAILABLE = False  # corrected 2026-08-13 -- see note above
 
 # NJ county name (as stored in the parcel composite's COUNTY field) -> standard FIPS
 # code, for {fips}.parquet/{fips}.gpkg file naming (§6.3/§6.5). Standard, stable
@@ -133,6 +137,15 @@ COUNTY_FIPS: dict[str, str] = {
 # P7: Census TIGERweb -- same service family as the FloodOps projects.
 TIGERWEB_STATE_COUNTY = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer"
 TIGERWEB_TRACTS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer"
+# This MapServer bundles several "Census Tracts" layers (each paired with a
+# different ACS attribute-table vintage: 2024, 2025, plain 2020) -- verified
+# live 2026-08-13 that layer 10 ("Census 2020" group) and the ungrouped
+# top-level layer 0 return identical NJ tract counts (2,181) and fields,
+# since tract *boundaries* are fixed to the 2020 decennial census regardless
+# of which ACS estimate vintage they're bundled with for attributes Phase 4
+# doesn't use anyway (only GEOID + geometry are needed). Using the
+# explicitly-labeled layer, not the ambiguous unlabeled default.
+TIGERWEB_TRACTS_LAYER = 10
 STATE_FIPS = "34"  # New Jersey
 
 # P8: NJ statewide geocoder. Note the *_cascade variant some pages advertise

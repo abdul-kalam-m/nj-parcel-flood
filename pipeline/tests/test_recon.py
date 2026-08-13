@@ -18,11 +18,16 @@ def test_p1_max_record_count_matches_verified_value():
     assert lib.P1_MAX_RECORD_COUNT == 2000
 
 
-def test_p6_marked_known_unavailable():
-    # Encodes the 2026-08-02 finding so a future session doesn't have to
-    # rediscover it from scratch -- re-verify via 00_recon.py before trusting
-    # this is still true, don't just trust the constant forever.
-    assert lib.P6_STATUS_KNOWN_UNAVAILABLE is True
+def test_p6_status_reflects_latest_live_recheck():
+    # 2026-08-02: confirmed unavailable (old v2 FimaNfipClaims, HTTP 503).
+    # 2026-08-13: re-checked live for Phase 4 -- available again, but under a
+    # renamed v3 endpoint (`NfipClaims`, no Fima prefix); the old v2 endpoint
+    # is deprecated/frozen, not just temporarily down. This constant (and this
+    # test) should track whatever was last actually verified live in either
+    # direction -- re-verify via 00_recon.py before trusting it further,
+    # don't assume today's answer is permanent either.
+    assert lib.P6_STATUS_KNOWN_UNAVAILABLE is False
+    assert lib.P6_CLAIMS_QUERY_URL.endswith("/v3/NfipClaims")
 
 
 def test_check_url_handles_unreachable_host_without_raising():

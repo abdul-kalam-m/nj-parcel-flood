@@ -28,8 +28,9 @@ by count and assessed value).
 
 ## Status
 
-Phase 3 (parcel/flood intersections) done, statewide — §12.1 geometry/
-consistency gates independently verified. Phase 4 (claims) next. Known
-limitation carried from Phase 1, owner-approved: statewide MOD-IV join rate is
-88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and
-`INTERSECT_SUMMARY.md`.
+Phase 4 (NFIP claims → tract loss percentile) done, statewide. P6 was
+re-checked live and found available again under a renamed endpoint (the old
+one is deprecated) — all three score inputs now exist for real. Phase 5
+(scoring) next. Known limitation carried from Phase 1, owner-approved:
+statewide MOD-IV join rate is 88.34%, below the guide's ≥97% gate. See
+`PROGRESS.md` and `TRACT_CLAIMS_SUMMARY.md`.

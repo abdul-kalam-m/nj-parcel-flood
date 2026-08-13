@@ -5,6 +5,146 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Phase 4: NFIP claims → tract loss percentile, statewide (agent: sonnet-5)
+
+**Started with the owner's specific instruction: re-check P6 before proceeding.**
+Good thing -- the situation changed since Phase 0, and not in the simple
+"back up" direction.
+
+**Done:**
+- **Re-checked P6 live rather than trusting the Phase 0 finding or the
+  recon script's own cached verdict.** Found `check_p6_claims()` in
+  `00_recon.py` had a **real bug**: it hardcoded `"ok": False`
+  unconditionally, never actually deriving availability from the live probe
+  results it computed -- meaning it would have kept reporting "unavailable"
+  forever even after the source came back. Fixed to derive `ok` from an
+  actual content check (a real NJ record with the expected geography field),
+  not just "got HTTP 200 + valid JSON" (the same class of gotcha as the
+  ArcGIS `{"error":...}`-under-200 bug fixed back in Phase 1 -- checked for
+  it here on principle, this API's error convention turned out fine).
+- **What the live re-check actually found**: the old v2 `FimaNfipClaims`
+  endpoint now returns HTTP 200 (not the 503 from 2026-08-02), but its own
+  response body carries a `DeprecationInformation` block -- data **frozen as
+  of 2026-06-01**, the dataset itself **removed 2026-10-15**, pointing to a
+  renamed replacement. Found and verified the replacement live:
+  **`https://www.fema.gov/api/open/v3/NfipClaims`** (no "Fima" prefix),
+  `lastDataSetRefresh` ~9 days before this check -- actively maintained, not
+  another dead end. Updated `nj_parcel_lib.py`'s `P6_CLAIMS_QUERY_URL` and
+  `P6_STATUS_KNOWN_UNAVAILABLE` (now `False`), re-ran `00_recon.py --force`
+  (all 7 sources now show OK), updated `test_recon.py`'s now-stale
+  always-unavailable assertion.
+- **Designed + implemented `04_claims.py`** (§5.2/§5.3 `C_loss`):
+  - Fetches NJ census tracts from TIGERweb. This MapServer bundles several
+    "Census Tracts" layers, each paired with a different ACS attribute
+    vintage (2024/2025) plus an explicit "Census 2020" grouping and an
+    ambiguous unlabeled top-level default -- verified live that the
+    unlabeled default and the explicit 2020 layer return identical NJ tract
+    counts (2,181) and fields (tract *boundaries* don't change between
+    decennial censuses regardless of which ACS estimate vintage they're
+    bundled with for attributes this phase doesn't use anyway). Used the
+    explicitly-labeled layer.
+  - Fetches NJ claims via OData `$select=censusGeoid` -- **verified this
+    actually returns records with only that one field**, not a default
+    field set plus the requested one. §5.6 ("NFIP claims never shown below
+    tract level") means the other 83 fields on a claims record (addresses,
+    damage amounts, elevation certs, dates) are never fetched at all, not
+    fetched-then-dropped -- same discipline as Phase 1's field allowlist.
+  - Sample claim's `censusGeoid` is a 12-digit **block-group** GEOID;
+    truncated to 11 digits for the tract-level key §5.2 asks for.
+  - Assigns every parcel to a tract via **centroid**-in-polygon (not an
+    overlap-percentage the way Phase 3 does it) -- a single categorical
+    "which tract" assignment is all this phase needs, and centroid-based
+    join is standard for this and far cheaper than repeating Phase 3's
+    overlay machinery. Keyed by a synthetic row id, not `pin` (same
+    duplicate-PIN safety reasoning as Phase 3).
+  - `claims_per_1000_parcels` = claim *record* count (not distinct
+    properties -- a repeat-loss property contributes one row per
+    historical claim) per tract, ÷ parcels-in-scope-in-that-tract × 1000.
+    Statewide percentile ranked only among tracts with ≥1 scored parcel --
+    a 0-parcel tract's rate is undefined/0 by construction, not a real
+    "low risk" signal, so it doesn't dilute the ranked population.
+  - Individual claim records are never joined to a parcel or written
+    anywhere -- only the tract-level aggregate (count, rate, percentile) is
+    retained, then merged onto parcels by `tract_geoid`. The per-parcel
+    output carries a tract-level *statistic*, not claims data.
+- Added `pipeline/tests/test_claims.py` (7 offline tests, no network):
+  `compute_tract_summary`'s formula/ranking/zero-parcel-exclusion, and
+  `assign_tracts`'s containment/unmatched/duplicate-PIN/boundary-tie
+  handling (the tie case constructed with deliberately-overlapping test
+  polygons, since real tracts don't overlap and a genuine boundary tie
+  isn't reliably reproducible). **Caught a real mistake in my own test**,
+  not the code: assumed a 2-way tie at the top of a ranked pair would give
+  both elements percentile 1.0; pandas' average-rank convention actually
+  gives `(1+2)/2/2 = 0.75`, matching the *other* tie test's math exactly --
+  fixed the test's expectation, not the code, once traced through by hand.
+  Full suite: **40/40 passing** (33 from Phases 1-3 + 7 new).
+- Verified on Salem alone first, then ran the full statewide ingest, 21/21
+  counties. **Results**: 2,181 NJ tracts; **202,287 NJ claim records**
+  fetched; 1,960 (0.97%) with missing/short `censusGeoid`; 17,721/200,327
+  (8.85%) of the rest don't match a current 2020 tract GEOID (expected --
+  claims span decades, older ones can reference pre-2020 tract boundaries;
+  only affects those specific claims' contribution, not the whole dataset).
+  **3,478,722 parcels processed -- exact match to Phase 1/3's count.** Only
+  **31 parcels statewide (0.0009%) unmatched to any tract** (parcel
+  centroid landing just outside every tract polygon -- minor NJOGIS/TIGER
+  boundary misalignment, the same class of harmless edge effect already
+  documented for county bboxes in Phase 2). 2,178/2,181 tracts have ≥1
+  scored parcel.
+- **Independently re-verified from the output parquet files** (not just the
+  console log): 21/21 counties, statewide parcel count matches Phase 1/3
+  exactly, PIN sets match `parcel_master` exactly per county, null
+  `tract_geoid`/`tract_loss_pctile` agree exactly (no orphaned nulls), all
+  non-null percentiles in [0,1]. **Result: PASS, no exceptions.**
+- Top claims-density tract statewide: `34031246300` (Passaic County) --
+  1,935 parcels, 5,275 claims (2,726 claims per 1,000 parcels, i.e. more
+  claims than parcels on average). Plausible, not alarming: Passaic River
+  basin has well-documented repetitive-loss flooding history (Floyd 1999,
+  Irene 2011), consistent with properties there filing multiple claims
+  across decades rather than a data error.
+
+**Decisions (§13.2):**
+- Claims counted as raw claim *records*, not distinct properties -- matches
+  §5.2's literal "tract NFIP claims per 1,000 parcels" wording. A
+  distinct-properties variant would be a defensible alternative reading;
+  flagging the choice explicitly here rather than picking silently, since
+  it's the kind of methodology detail §13.3 cares about.
+- No per-county output-exists skip/checkpoint the way Phases 1-3 have --
+  considered and deliberately not added, not an oversight: this phase's
+  per-parcel percentile depends on a *statewide* aggregate (every county's
+  parcel-to-tract counts feed the same ranked population), so a single
+  county's output can't be correctly produced in isolation from a stale
+  cache the way Phase 1-3's genuinely-independent per-county outputs could.
+  The expensive part (claims/tract network fetch) already gets real
+  resumability for free from `get_json()`'s existing cache; the per-county
+  spatial join is cheap enough (simple centroid-in-2,181-simple-polygons,
+  nothing like Phase 3's flood-zone overlay) that always redoing it is a
+  reasonable, honest trade instead of a more complex intermediate-cache
+  scheme. (Note for whoever runs this next: the statewide run above was
+  accidentally invoked with `--force`, wastefully re-fetching the already-
+  cached claims data instead of reusing it from the preceding Salem test --
+  cost some redundant time against FEMA's API, not correctness. Don't pass
+  `--force` unless the source data itself needs refreshing.)
+
+**⚠ Deviations / open items:**
+- The Phase 1 join-rate limitation (88.34% vs required ≥97%) is still
+  carried forward unresolved, per the owner's 2026-08-12 direction.
+- The old v2 P6 endpoint is scheduled for removal 2026-10-15 -- not used
+  anywhere in this codebase now, but worth a quick re-verification on the
+  *next* annual claims refresh (§6.4) that the v3 endpoint (or whatever
+  FEMA renames it to next) is still what's configured, rather than assuming
+  today's URL is permanent.
+- `data/processed/parcel_claims/` and `tract_claims_summary.parquet`
+  intentionally not committed (gitignored, §8 convention) --
+  `TRACT_CLAIMS_SUMMARY.md` (aggregate counts only, §5.6-safe) is committed.
+
+**Next:** Phase 5 (`05_score.py`, §5.3) -- assemble `C_cur`/`C_fut`/`C_loss`
+into the composite 0-100 score and bands. All three inputs now exist for
+real (Phase 3's `sfha_pct`/`fut_pct`, this phase's `tract_loss_pctile`) --
+no fallback-weight redistribution needed, since P6 turned out to be
+available after all.
+
+---
+
 ## 2026-08-12 — Phase 3: parcel/flood intersections, statewide (agent: sonnet-5)
 
 The heaviest pipeline stage (§6.3 budget: ≤12h statewide) and the first stage

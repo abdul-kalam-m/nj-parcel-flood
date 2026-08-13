@@ -79,21 +79,44 @@ def check_p4_future_layers(force: bool) -> dict:
 
 
 def check_p6_claims(force: bool) -> dict:
+    # NOTE: `ok` here is derived from an actual content check (a real,
+    # non-empty NJ record with the geography field Phase 4 needs), not just
+    # "got HTTP 200 + valid JSON" -- the earlier version of this function
+    # hardcoded ok=False unconditionally, which would have kept reporting
+    # "unavailable" forever even after the source came back; caught and fixed
+    # 2026-08-13 while actually re-checking P6 for Phase 4 (see
+    # nj_parcel_lib.py's P6 comment for the full story: the old v2 endpoint
+    # is deprecated/frozen, the real replacement is v3 `NfipClaims`).
     meta_probe = lib.check_url(lib.P6_CLAIMS_METADATA_URL,
-                               params={"$filter": "name eq 'FimaNfipClaims'"})
-    data_probe = lib.check_url(lib.P6_CLAIMS_QUERY_URL,
-                               params={"$filter": "state eq 'NJ'", "$top": 2})
+                               params={"$filter": "name eq 'NfipClaims'"})
+    try:
+        sample = lib.get_json(lib.P6_CLAIMS_QUERY_URL,
+                              params={"$filter": "state eq 'NJ'", "$top": 3},
+                              force=force, timeout=45)
+        records = sample.get("NfipClaims", [])
+        data_ok = bool(records) and "censusGeoid" in records[0]
+        dep_notice = sample.get("metadata", {}).get("DeprecationInformation")
+    except Exception as e:  # noqa: BLE001
+        records, data_ok, dep_notice = [], False, None
+        sample = {"fetch_error": str(e)}
     return {
-        "source": "P6 OpenFEMA NFIP Redacted Claims", "ok": False,
-        "metadata_endpoint_ok": meta_probe["ok"], "data_endpoint_probe": data_probe,
-        "note": "CONFIRMED UNAVAILABLE 2026-08-02: metadata endpoint works (dataset "
-                "exists, lastRefresh 2025-12-19) but the live query endpoint returns "
-                "HTTP 503. Consistent with public reporting of a suspension of "
-                "FimaNfipClaims/FimaNfipPolicies access. Bulk CSV/parquet export URLs "
-                "from the metadata also 403 (Akamai) to a plain request. §5.3's "
-                "documented fallback applies: redistribute C_loss's 0.25 weight "
-                "proportionally to C_cur/C_fut (effective ~0.643/0.357), record the "
-                "variant in meta.json. Re-check before Phase 4, not assumed fixed.",
+        "source": "P6 OpenFEMA NFIP Claims (v3 NfipClaims)", "ok": data_ok,
+        "metadata_endpoint_ok": meta_probe["ok"], "n_sample_nj_records": len(records),
+        "deprecation_notice_on_this_endpoint": dep_notice,
+        "note": (
+            "RE-CHECKED 2026-08-13 (was CONFIRMED UNAVAILABLE 2026-08-02 on the "
+            "old v2 FimaNfipClaims endpoint, HTTP 503): now available under a "
+            "renamed v3 endpoint, `NfipClaims` (no Fima prefix) -- actively "
+            "refreshed (~9 days old at check time), real NJ records with a "
+            "usable `censusGeoid` (12-digit block-group; truncate to 11 for "
+            "tract level, §5.2). The old v2 endpoint documents its own "
+            "deprecation (frozen since 2026-06-01, removed 2026-10-15) -- not "
+            "used." if data_ok else
+            "Still unavailable as of this re-check. §5.3's documented fallback "
+            "applies: redistribute C_loss's 0.25 weight proportionally to "
+            "C_cur/C_fut (effective ~0.643/0.357), record the variant in "
+            "meta.json."
+        ),
     }
 
 
