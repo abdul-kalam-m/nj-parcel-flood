@@ -28,6 +28,8 @@ by count and assessed value).
 
 ## Status
 
-Phase 2 (flood layers) done, statewide. Phase 3 (intersections) next. Known
+Phase 3 (parcel/flood intersections) done, statewide — §12.1 geometry/
+consistency gates independently verified. Phase 4 (claims) next. Known
 limitation carried from Phase 1, owner-approved: statewide MOD-IV join rate is
-88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and `FLOOD_COVERAGE.md`.
+88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and
+`INTERSECT_SUMMARY.md`.

@@ -5,6 +5,156 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-12 — Phase 3: parcel/flood intersections, statewide (agent: sonnet-5)
+
+The heaviest pipeline stage (§6.3 budget: ≤12h statewide) and the first stage
+where §12.1's geometry/consistency QA gates actually apply (§11's row for
+Phase 3, not Phase 1/2). Total statewide runtime: **1.89h, well inside
+budget** -- see the performance section below for why that wasn't a given.
+
+**Done:**
+- Wrote `03_intersect.py`: per county, overlays `parcel_geoms` (Phase 1)
+  against the NFHL and CAFE SLR5 layers (Phase 2), all reprojected to
+  EPSG:26918 (§4 working CRS) before any area math.
+  - `sfha_pct` uses NFHL's own `SFHA_TF=='T'` flag directly rather than a
+    hand-rolled `FLD_ZONE` prefix match -- verified live against Atlantic +
+    Essex data that `SFHA_TF=='T'` <=> `FLD_ZONE` in `{A,AE,AH,AO,VE}` exactly
+    (and `SFHA_TF=='F'` <=> `{X, OPEN WATER}`), so trusting FEMA's own
+    classification is simpler and more robust than re-deriving it from §4's
+    illustrative (not exhaustive) "A*/V*" pattern.
+  - `mod_risk_pct` (shaded X / "0.2% annual chance") uses
+    `ZONE_SUBTY == "0.2 PCT ANNUAL CHANCE FLOOD HAZARD"` -- exact string
+    confirmed live, not `FLD_ZONE=='X'` alone (which also includes
+    unshaded/minimal-risk X).
+  - `fut_pct` is a simple union overlap against the whole P4/CAFE layer for
+    covered counties -- confirmed live the layer mixes a majority "SLR 5FT"
+    label with a minority of retained FEMA zone labels (AE/VE/AO/"A - NO
+    BFE"), but §5.2 asks for total future overlap here, not a sub-breakdown,
+    so nothing is filtered out.
+  - Overlap keyed by a synthetic per-row id, **not `pin`** -- Phase 1 found
+    742 statewide conflicting-duplicate PINs (kept, not merged); grouping by
+    `pin` here would have silently combined overlap area across two distinct
+    parcels that happen to share one.
+  - Sliver rule (§5.2) implemented as *either* test drops the overlap: <1% of
+    the parcel's own area, *or* <10 m² absolute -- both are needed since one
+    catches a trivial fraction of a huge parcel and the other catches a
+    trivial absolute overlap on a tiny parcel.
+  - `fut_pct`/`fut_flag` stored as null (not zero/False) for the 6
+    non-P4-covered counties, via pandas' nullable boolean dtype for the flag
+    -- makes it structurally awkward to accidentally read "no future risk"
+    from a not-a-boolean value without checking `fut_coverage` first, per
+    §5.2's explicit warning.
+- **Performance: found and fixed a real problem before it became a 9-10h
+  statewide run.** Naive per-feature `gpd.overlay()` took 325s on Salem --
+  the *smallest* county -- linearly extrapolating to ~9-10h statewide, too
+  close to the 12h budget for comfort on the largest counties. Profiled
+  before guessing: Salem's SFHA layer alone (1,478 features) carries
+  **4,045,728 vertices** (~2,738/polygon) -- confirmed this, not algorithm
+  choice, was the cost driver by testing three different approaches
+  (naive overlay, sjoin "intersects" prefilter, dissolve-then-vectorized-
+  intersection) that were all similarly slow despite very different
+  algorithmic strategies. Fix: `.simplify(1.0, preserve_topology=True)`
+  applied to the flood-zone layers only (never parcels) -- cut Salem's SFHA
+  vertex count to 467,558 (-88%) and measured a 4.6x faster overlay on an
+  identical parcel subset, while shifting total intersection area by 0.004%
+  (287 m² out of 7,013,629 m²) -- two orders of magnitude below the sliver
+  thresholds already in place, and well inside the inherent modeling
+  uncertainty of a modeled flood-zone boundary (not a surveyed line) in the
+  first place. Salem end-to-end: 325s -> 118s (2.76x).
+  - **Side effect investigated, not just noted:** the overlap-fraction clamp
+    count jumped after simplification (Salem: 21 -> ~300+ per full run).
+    Checked the actual raw-pct distribution among clamped parcels directly:
+    mean 1.0015, 75th percentile ~1.0, only a handful reaching as high as
+    1.60. Independently-simplifying topologically-adjacent zone polygons can
+    shift their shared boundary slightly differently, causing a thin,
+    previously edge-matched strip to register as double-covered -- this can
+    only inflate a parcel's overlap fraction if it was already
+    heavily/fully covered to begin with (a partially-covered parcel's summed
+    overlap can't cross 100% from a boundary sliver alone), so the clamped
+    *result* (capped to 1.0) is correct or very close to it either way. Most
+    of the "clamped" count is this sub-percent noise, not a systematic bias
+    -- not tuned to a second, coarser threshold for the logged count, since
+    that would just be a different, equally-arbitrary judgment call baked
+    into code instead of explained in prose here.
+- Added `pipeline/tests/test_intersect.py`: 10 offline tests (synthetic
+  squares/rectangles, no files, no network) covering full/partial/no overlap,
+  both sliver-rule branches independently, multiple non-overlapping zones
+  summing correctly, overlapping source zones triggering the clamp, and the
+  duplicate-PIN row-position-keying guarantee. Full suite: **33/33 passing**
+  (23 from Phases 1-2 + 10 new).
+- Verified on Salem alone first (smallest county, P4-covered) before
+  committing to a statewide run, matching the Phase 2 discipline.
+- **Ran the full statewide Phase 3 ingest, 21/21 counties, 1.89h total**
+  (sum of per-county wall time; well under the 12h budget). Total parcels
+  processed: **3,478,722 -- exact match to Phase 1's count**, confirming no
+  rows lost or duplicated across the phase boundary.
+- **Independently re-verified §12.1's geometry + consistency gates from the
+  output parquet files directly** (not just trusted the per-county console
+  log or the script's own internal asserts): 21/21 counties, all `*_pct`
+  columns in [0,1], all flags exactly consistent with their overlap (`flag ==
+  (pct > 0)`), `fut_pct`/`fut_flag` null everywhere `fut_coverage` is false
+  and nowhere else, every county's `parcel_flood` row count matches its
+  `parcel_master` row count exactly. **Result: PASS, no exceptions.**
+- Statewide results: **SFHA (current) risk 450,888 parcels (12.96%);
+  moderate (shaded X) risk 179,398 (5.16%); future risk 532,899 of the
+  2,852,889 parcels in P4-covered counties (18.68%)**.
+- **Investigated a real timing outlier rather than just reporting it**: Cape
+  May took 4,379.7s (73 min) -- ~65% of the *entire* statewide runtime by
+  itself, ~8x the next-slowest county (Ocean, 536.6s), despite having fewer
+  parcels than 6 other counties that all ran in well under 10 minutes.
+  Checked the obvious hypothesis (vertex density) directly and it does
+  **not** hold: Cape May's SFHA layer has *fewer* total vertices than
+  Salem's (2.24M vs 4.05M) and its parcels average *fewer* vertices/parcel
+  (10.3) than both Salem (15.2) and Ocean (28.6) -- Ocean in particular has
+  both more parcels *and* higher per-parcel vertex density than Cape May,
+  yet ran 8x faster. Not chased to a fully definitive root cause (would need
+  profiling tooling below what's reasonable to invest for a non-blocking
+  performance curiosity), but the most plausible explanation given the
+  evidence is spatial *fragmentation* (many small, densely-interleaved
+  islands/marshes/zones from Cape May's barrier-island geography) rather
+  than per-feature complexity -- a different cost driver than the vertex
+  density found and fixed above. Notable in its own right: **Cape May has
+  now been the standout statistical/performance outlier in every single
+  phase of this project** (Phase 1: worst join rate at 65.93% and most
+  duplicate PINs by far; Phase 2: the only county needing the NFHL bisection
+  fallback exercised for real; Phase 3: this). Not a coincidence worth
+  ignoring, but not something blocking either, since every phase completed
+  correctly for it regardless.
+
+**Decisions (§13.2):**
+- Sum-then-clamp (overlay individual zone features, sum per parcel, clamp to
+  [0,1]) kept over a dissolve-first design, despite the clamp-noise question
+  above -- tested dissolve-then-vectorized-intersection directly on Salem and
+  it was not obviously faster than the fix actually shipped (union_all alone
+  took 41s before any per-parcel work even started), so there was no
+  performance reason to switch, and sum-then-clamp is simpler to reason
+  about with the existing test suite.
+- Simplification tolerance (1m) applied only to flood-zone layers, never to
+  parcel geometry -- parcels are the actual unit of analysis and stay at
+  full source precision; only the hazard-layer boundaries (already a modeled
+  approximation, not a surveyed line) are simplified.
+
+**⚠ Deviations / open items:**
+- The Phase 1 join-rate limitation (88.34% vs required ≥97%) is still
+  carried forward unresolved, per the owner's 2026-08-12 direction -- not
+  re-litigated here.
+- Cape May's Phase 3 timing anomaly (above) is characterized, not fully
+  root-caused. Worth a real look if this pipeline is ever re-run against a
+  refreshed NFHL vintage, but not blocking Phase 4.
+- `data/processed/parcel_flood/` intentionally not committed (gitignored,
+  matches §8's convention) -- `INTERSECT_SUMMARY.md` (human-readable) and
+  `intersect_report.json`'s structure (via this log) are the durable record.
+
+**Next:** Phase 4 (`04_claims.py`, §6.3) -- P6/NFIP claims to tract
+percentiles. P6 was confirmed unavailable back in Phase 0 (§ RECON.md: HTTP
+503 + Akamai-blocked bulk exports) and not re-checked since -- re-check
+first; if still unavailable, this phase is mostly about correctly applying
+§5.3's already-documented fallback (redistribute `C_loss`'s weight
+proportionally to `C_cur`/`C_fut`, record the variant in `meta.json`) rather
+than an actual claims ingest.
+
+---
+
 ## 2026-08-12 — Phase 2: flood layers (NFHL + CAFE SLR 5ft), statewide (agent: sonnet-5)
 
 **Decisions (§13.2) -- owner input received on the entry below:** given the
