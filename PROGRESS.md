@@ -5,6 +5,95 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Phase 5: composite score + bands, statewide (agent: sonnet-5)
+
+Pure computation (§5.3) over Phases 1/3/4's already-computed outputs -- no
+network, no expensive geometry. Ran in seconds, not the hours the last two
+phases needed.
+
+**Done:**
+- **Re-derived the §5.3 weight-redistribution math from the guide's literal
+  text and found a real discrepancy with this project's own early record.**
+  §5.3: "if P6 unavailable, redistribute its [C_loss's 0.25] weight
+  proportionally to the other two [C_cur 0.45, C_fut 0.30]." Proportional to
+  their existing ratio: `0.45/(0.45+0.30)=0.60`, `0.30/0.75=0.40`, summing
+  to 1.0 exactly. The Phase 0 record (months earlier in this project) had
+  noted "~0.643/0.357" for this same fallback -- re-derived it fresh here
+  since I was about to actually implement it, and couldn't reconcile that
+  figure under any reading of "proportional to the other two" (0.643+0.357
+  sums to 1.0 only by rounding coincidence, not by construction the way
+  0.60+0.40 does). Treating the early figure as a stale error and using the
+  freshly-derived 0.60/0.40, not silently carrying the old number forward
+  just because it was already written down somewhere.
+- Implemented `05_score.py`: `C_cur`/`C_fut` computed exactly per §5.3's
+  formulas (presence floor, moderate-risk additive term, future-coverage
+  fallback); `C_loss` = Phase 4's `tract_loss_pctile` directly (P6 turned
+  out to be available, so the redistribution fallback only fires for the
+  31 statewide parcels Phase 4 couldn't match to any tract, not a dataset-
+  wide P6 outage -- same underlying mechanism, different trigger, applied
+  per-parcel rather than per-run).
+  - **`C_loss` is always stored as a clean 0.0-filled value, never raw
+    NaN**, specifically so §12.1's "score reproducible from stored
+    components" gate holds unconditionally: with the redistributed
+    `w_loss=0`, `0 * NaN` is itself `NaN` under IEEE float rules, which
+    would silently break an otherwise-correct recompute check. Verified
+    this distinction actually matters with a dedicated test, not just
+    asserted it.
+  - Row alignment across `parcel_master`/`parcel_flood`/`parcel_claims`
+    (three files written independently by three different scripts) is by
+    **row position, not a `pin` join** -- same duplicate-PIN reasoning as
+    Phases 3/4 -- but explicitly **verified** per county (exact pin-sequence
+    equality asserted, not just trusted) before combining, so a future
+    change to one script's row order would fail loudly here instead of
+    silently fusing the wrong county's rows together.
+- Added `pipeline/tests/test_score.py` (25 offline tests): presence floors,
+  the capped-at-1 boundary, the future-coverage fallback, both weight
+  schemes, **every exact score/band boundary** (0, 1, 24, 25, 49, 50, 74,
+  75, 100 -- the classic off-by-one risk zone for a bands-from-cutoffs
+  function), and two dedicated recompute-check tests (§12.1 gate 4) --
+  one of which specifically reproduces the NaN-times-zero-weight trap
+  and confirms the stored `C_loss` design avoids it. Full suite:
+  **65/65 passing** (40 from Phases 1-4 + 25 new).
+- Verified on Salem alone first, then ran statewide (21/21 counties).
+  **3,478,722 parcels scored -- exact match to Phase 1/3/4.** 31 parcels
+  had `C_loss` redistributed, **exactly matching Phase 4's statewide count
+  of tract-unmatched parcels** -- a clean cross-phase consistency signal
+  that wasn't specifically engineered, just fell out of both phases
+  handling the same 31 edge-case parcels correctly.
+- **Independently re-verified from the output files, every row (not a
+  sample)**: all `score` in [0,100], all `C_cur`/`C_fut`/`C_loss` in [0,1],
+  zero raw NaN in `C_loss`, **zero recompute-check mismatches across all
+  3,478,722 rows**, PIN sets and row counts match `parcel_master` exactly
+  per county. **Result: PASS, no exceptions.**
+- Statewide band distribution: **low 2,806,930 (80.7%); severe 288,087
+  (8.28%); moderate 194,462 (5.59%); high 189,233 (5.44%); none 10
+  (0.0003%).** "None" (score exactly 0) requires all three components to
+  be simultaneously exactly zero -- rare by construction, since `C_loss`
+  is a percentile rank and only the tract(s) at the absolute bottom of
+  ~2,178 ranked tracts can land on exactly 0.0, so this small count is a
+  sign the formula is behaving as designed, not a bug.
+
+**Decisions (§13.2):**
+- Redistribution weights corrected to 0.60/0.40 (see Done above) --
+  logged explicitly since §13.3 lists the score formula/weights among
+  what needs owner awareness for any change, and this corrects a number
+  that was on record, even though it was never actually load-bearing
+  until this phase.
+
+**⚠ Deviations / open items:**
+- The Phase 1 join-rate limitation (88.34% vs required ≥97%) is still
+  carried forward unresolved, per the owner's 2026-08-12 direction.
+- `data/processed/parcel_scores/` intentionally not committed (gitignored,
+  §8 convention) -- `SCORE_SUMMARY.md` (band distribution only, no
+  per-parcel data) is committed.
+
+**Next:** Phase 6 (`06_aggregate.py`, §5.5) -- geography × class-group ×
+risk-lens rollups (county/muni, % at risk, value at risk) into DuckDB →
+JSON artifacts. First phase that touches §5.5's exact aggregate formulas
+and the ranked-municipality table.
+
+---
+
 ## 2026-08-13 — Phase 4: NFIP claims → tract loss percentile, statewide (agent: sonnet-5)
 
 **Started with the owner's specific instruction: re-check P6 before proceeding.**

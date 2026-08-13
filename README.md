@@ -28,9 +28,8 @@ by count and assessed value).
 
 ## Status
 
-Phase 4 (NFIP claims → tract loss percentile) done, statewide. P6 was
-re-checked live and found available again under a renamed endpoint (the old
-one is deprecated) — all three score inputs now exist for real. Phase 5
-(scoring) next. Known limitation carried from Phase 1, owner-approved:
-statewide MOD-IV join rate is 88.34%, below the guide's ≥97% gate. See
-`PROGRESS.md` and `TRACT_CLAIMS_SUMMARY.md`.
+Phase 5 (composite score + bands) done, statewide — every parcel now has a
+0–100 score, and the §12.1 recompute-check gate was independently verified
+across all 3,478,722 rows, not sampled. Phase 6 (aggregates) next. Known
+limitation carried from Phase 1, owner-approved: statewide MOD-IV join rate is
+88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and `SCORE_SUMMARY.md`.
