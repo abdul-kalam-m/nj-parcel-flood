@@ -25,3 +25,19 @@ body {
   outline: 3px solid #1d4ed8;
   outline-offset: 2px;
 }
+
+/* MapLibre's default Popup (used for the map hover tooltip) is a plain
+   white box with no dark-mode awareness of its own -- this app's dark
+   theme follows prefers-color-scheme everywhere else, so match it here too
+   rather than leave a jarring white card on a dark page. */
+@media (prefers-color-scheme: dark) {
+  .maplibregl-popup-content {
+    background: #27272a;
+    color: #f4f4f5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #27272a; }
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: #27272a; }
+  .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #27272a; }
+  .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #27272a; }
+}

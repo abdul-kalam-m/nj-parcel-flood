@@ -5,6 +5,7 @@ import { SearchMapView } from './views/SearchMapView'
 import { JurisdictionSummaryView } from './views/JurisdictionSummaryView'
 import { DistrictExposureView } from './views/DistrictExposureView'
 import { RankedMunicipalitiesView } from './views/RankedMunicipalitiesView'
+import { MethodologyView } from './views/MethodologyView'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="summary" element={<JurisdictionSummaryView />} />
           <Route path="exposure" element={<DistrictExposureView />} />
           <Route path="ranked" element={<RankedMunicipalitiesView />} />
+          <Route path="methodology" element={<MethodologyView />} />
         </Route>
       </Routes>
     </FilterProvider>

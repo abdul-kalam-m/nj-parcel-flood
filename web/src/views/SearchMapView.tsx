@@ -6,9 +6,26 @@ import { BAND_COLORS, BAND_LABELS } from '../lib/bands'
 import { BANDS } from '../types'
 import type { ParcelTileProps, SearchRecord } from '../types'
 
+// Mirrors the layer minzoom/maxzoom thresholds in MapCanvas.tsx: counties
+// render up to zoom 13, munis from 9-13 (on top of counties), parcels from
+// 13 up. The toggle jumps to a representative zoom inside each tier rather
+// than re-centering -- there's no per-geography centroid in the current
+// pipeline output to fly to, so this controls zoom only, from wherever the
+// map already is.
+type MapLevel = 'county' | 'municipality' | 'parcel'
+const LEVEL_ZOOM: Record<MapLevel, number> = { county: 7.2, municipality: 10.5, parcel: 14 }
+const LEVEL_LABELS: Record<MapLevel, string> = { county: 'County', municipality: 'Municipality', parcel: 'Parcel' }
+function levelForZoom(zoom: number): MapLevel {
+  if (zoom < 9) return 'county'
+  if (zoom < 13) return 'municipality'
+  return 'parcel'
+}
+
 export function SearchMapView() {
   const [selected, setSelected] = useState<ParcelTileProps | null>(null)
   const [flyTo, setFlyTo] = useState<{ lon: number; lat: number; zoom?: number } | null>(null)
+  const [zoomTo, setZoomTo] = useState<{ zoom: number } | null>(null)
+  const [zoom, setZoom] = useState(7.2)
 
   return (
     <section>
@@ -22,12 +39,47 @@ export function SearchMapView() {
       </p>
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="min-w-0 flex-1">
-          <MapCanvas onParcelClick={setSelected} flyTo={flyTo} />
+          {/* Docked onto the map itself, like MapLibre's own zoom control --
+              reads as a map control, not a caption sitting next to one. */}
+          <div className="relative">
+            <MapCanvas onParcelClick={setSelected} flyTo={flyTo} zoomTo={zoomTo} onZoomChange={setZoom} />
+            <div className="absolute left-2 top-2 z-10">
+              <MapLevelToggle level={levelForZoom(zoom)} onSelect={(l) => setZoomTo({ zoom: LEVEL_ZOOM[l] })} />
+            </div>
+          </div>
           <Legend />
         </div>
         {selected && <ParcelDetailPanel parcel={selected} onClose={() => setSelected(null)} />}
       </div>
     </section>
+  )
+}
+
+function MapLevelToggle({ level, onSelect }: { level: MapLevel; onSelect: (l: MapLevel) => void }) {
+  return (
+    <div className="flex items-center gap-1.5 rounded bg-white/90 px-1.5 py-1 text-xs shadow backdrop-blur-sm dark:bg-zinc-900/90">
+      <span className="pl-0.5 font-medium text-zinc-500 dark:text-zinc-400">Zoom to:</span>
+      <div
+        role="group"
+        aria-label="Map detail level"
+        className="flex overflow-hidden rounded border border-zinc-300 dark:border-zinc-700"
+      >
+        {(['county', 'municipality', 'parcel'] as MapLevel[]).map((l) => (
+          <button
+            key={l}
+            type="button"
+            aria-pressed={level === l}
+            title={`Jump to ${LEVEL_LABELS[l].toLowerCase()}-level zoom`}
+            className={`px-2 py-1 font-medium ${
+              level === l ? 'bg-blue-700 text-white' : 'bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700'
+            }`}
+            onClick={() => onSelect(l)}
+          >
+            {LEVEL_LABELS[l]}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 

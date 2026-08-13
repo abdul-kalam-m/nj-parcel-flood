@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react'
 import {
-  MapLibreMap, NavigationControl, addProtocol,
+  MapLibreMap, NavigationControl, Popup, addProtocol,
   type ExpressionSpecification, type MapLayerMouseEvent,
 } from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
 import { DATA_BASE_URL } from '../config'
 import { useFilters } from '../context/useFilters'
-import { BAND_MATCH_EXPRESSION } from '../lib/bands'
-import type { ParcelTileProps } from '../types'
+import { BAND_LABELS, BAND_MATCH_EXPRESSION } from '../lib/bands'
+import type { BoundaryTileProps, ParcelTileProps } from '../types'
 
 // P9 basemap (§4/§6.2): OpenFreeMap vector tiles, no API key, no Mapbox/Google dependency.
 const BASEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
@@ -33,9 +33,16 @@ function choroplethExpr(lens: 'current' | 'future' | 'either'): ExpressionSpecif
 export interface MapCanvasProps {
   onParcelClick: (props: ParcelTileProps) => void
   flyTo?: { lon: number; lat: number; zoom?: number } | null
+  // Detail-level toggle (county/muni/parcel): jumps the current zoom only,
+  // keeping the map centered where it already is -- deliberately separate
+  // from `flyTo` above, which also re-centers *and* selects whatever parcel
+  // ends up at the target point. Conflating the two would pop the parcel
+  // panel open every time someone just wants to change zoom tiers.
+  zoomTo?: { zoom: number } | null
+  onZoomChange?: (zoom: number) => void
 }
 
-export function MapCanvas({ onParcelClick, flyTo }: MapCanvasProps) {
+export function MapCanvas({ onParcelClick, flyTo, zoomTo, onZoomChange }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const { filters } = useFilters()
@@ -99,6 +106,41 @@ export function MapCanvas({ onParcelClick, flyTo }: MapCanvasProps) {
       map.on('mouseleave', 'parcels-fill', () => {
         map.getCanvas().style.cursor = ''
       })
+
+      // Hover tooltip across all 3 tiers, one unified handler rather than
+      // one per layer: counties/munis (<=13) and parcels (>=13) never render
+      // at the same zoom, so querying all three together can never produce
+      // a conflicting pair of hits -- whichever one is actually visible at
+      // the cursor is the only one that comes back.
+      const tooltip = new Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' })
+      const fmtPct = (v: number | undefined | null) => (v == null ? 'n/a' : `${v.toFixed(1)}%`)
+      map.on('mousemove', (e) => {
+        const hits = map.queryRenderedFeatures(e.point, {
+          layers: ['munis-fill', 'counties-fill', 'parcels-fill'],
+        })
+        const f = hits[0]
+        if (!f) {
+          tooltip.remove()
+          return
+        }
+        let html: string
+        if (f.layer.id === 'parcels-fill') {
+          const p = f.properties as ParcelTileProps
+          html = `<strong>${p.situs_address || `Block ${p.block} Lot ${p.lot}`}</strong><br>
+            PIN ${p.pin} &middot; ${BAND_LABELS[p.band]} risk (score ${p.score})`
+        } else {
+          const b = f.properties as BoundaryTileProps
+          const name = f.layer.id === 'munis-fill' ? (b.mun_name ?? b.county_name) : b.county_name
+          html = `<strong>${name}</strong><br>
+            Current: ${fmtPct(b.current_pct_at_risk)} at risk &middot;
+            Future: ${fmtPct(b.future_pct_at_risk)} at risk`
+        }
+        tooltip.setLngLat(e.lngLat).setHTML(html).addTo(map)
+      })
+      map.on('mouseout', () => tooltip.remove())
+
+      onZoomChange?.(map.getZoom())
+      map.on('zoomend', () => onZoomChange?.(map.getZoom()))
     })
 
     return () => {
@@ -166,6 +208,12 @@ export function MapCanvas({ onParcelClick, flyTo }: MapCanvasProps) {
     map.once('idle', selectAtTarget)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flyTo])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!zoomTo || !map) return
+    map.easeTo({ zoom: zoomTo.zoom })
+  }, [zoomTo])
 
   return (
     <div

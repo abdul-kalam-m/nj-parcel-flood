@@ -5,6 +5,103 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Map detail-level toggle, Methodology page, map/chart tooltips, design pass (agent: sonnet-5)
+
+Owner-requested UI round: (1) a filter/button to jump the map between
+county/muni/parcel detail, "then push it to claude design for UI overhaul";
+(2) a Methodology page with glossary and data sources; (3) tooltips on the
+map and charts.
+
+**Done:**
+- **Detail-level toggle** (`SearchMapView.tsx`): three buttons (County/
+  Municipality/Parcel) that jump the map's zoom to a representative value
+  inside each tier's existing minzoom/maxzoom range (`MapCanvas.tsx` gained
+  a `zoomTo` prop, deliberately separate from the existing `flyTo` prop --
+  `flyTo` also re-centers *and* selects whatever parcel ends up at the
+  target point, which would pop the parcel panel open on every zoom-level
+  click if reused). Docked onto the map itself after the design pass (see
+  below), highlighting whichever tier the actual current zoom is in (tracks
+  real scroll-zoom too, via a new `onZoomChange`/`'zoomend'` callback, not
+  just toggle clicks). **Scope call, stated rather than silently decided:**
+  the toggle changes zoom only, not center -- there's no per-geography
+  centroid in the current pipeline output to fly to for a selected county/
+  muni, so it's "jump tier from wherever the map already is," not "jump to
+  my selected geography's parcel view."
+- **Methodology page** (`MethodologyView.tsx`, new `/methodology` route +
+  nav item): data sources (§4), the composite-score formula/weights/bands
+  and class-group crosswalk (§5.3/§5.4), aggregate-figure definitions
+  (§5.5), privacy rules (§5.6), and the glossary (§15) -- copied from the
+  guide's own locked text, not paraphrased freely, since the weights/bands/
+  class codes have to match what `05_score.py` actually computes.
+- **Tooltips**: map -- one unified `mousemove` handler across all three
+  tile layers (`munis-fill`/`counties-fill`/`parcels-fill`) rather than one
+  per layer, since none of them render at overlapping zoom ranges (verified
+  against the actual minzoom/maxzoom values already in `MapCanvas.tsx`), so
+  querying all three together can never return a conflicting pair of hits.
+  Shows county/muni name + current/future %-at-risk, or parcel address/PIN/
+  band on the parcels tier. Added a dark-mode override for MapLibre's
+  Popup CSS (its default is light-only, no theme awareness of its own).
+  Chart -- District Exposure's bars gained a rich on-hover tooltip rendered
+  inside the same `<svg>`/viewBox as the bars (not an absolutely-positioned
+  HTML overlay, which would need to convert viewBox coordinates into
+  screen pixels depending on how much the SVG is currently scaled by its
+  container); the existing native `<title>` stays as a fallback.
+- **Design pass** (§ owner: "push it to claude design for UI overhaul"):
+  ran `design:design-critique` against real-browser screenshots of all 5
+  views (captured via a throwaway Playwright script, not this session's
+  preview pane -- see verification note below). Applied the 3 findings
+  worth fixing, not just logged them:
+  - Band / min overlap % / min assessed value are read by `MapCanvas`
+    only -- verified in code, not assumed -- so changing them on the other
+    3 views silently does nothing. `FilterBar.tsx` now shows a route-aware
+    hint (`useLocation()`) exactly when one of those three is non-default
+    on a non-map page, instead of leaving that to be discovered by a
+    confused click.
+  - The new toggle read as page copy, not a map control, sitting next to a
+    paragraph instead of on the map. Docked it onto the map itself, same
+    convention as MapLibre's own zoom +/- control.
+  - Mobile (390px) stacked all 7 filter controls above any real content.
+    `FilterBar` now collapses behind a "Filters" disclosure below the `sm:`
+    breakpoint (shows an active-filter count when collapsed), always open
+    at `sm:` and up via `hidden sm:flex`.
+- **Caught and fixed a real bug via the design screenshots themselves**,
+  before it ever reached the owner: the Methodology page's own closing
+  disclaimer duplicated `Layout.tsx`'s already-global footer disclaimer
+  directly beneath it -- visible in the first full-page screenshot, not
+  something either the plan or the code review would have caught. Removed
+  the page-local one.
+- **Verification, given this session's preview pane still can't get past
+  MapLibre's `'load'` event (confirmed again here -- zero pmtiles requests
+  fired when checked live)**: clicking the new toggle in the preview pane
+  updated nothing (no `'zoomend'`, same rAF-suspension class of limitation
+  already documented for `flyTo`/`easeTo` in the two entries above) --
+  rather than assume it's fine by analogy, added two small, kept
+  (`web/e2e/map-level-toggle.spec.ts`, `web/e2e/map-tooltip.spec.ts`) real-
+  browser Playwright checks and confirmed both pass. The District Exposure
+  chart tooltip has no MapLibre/rAF dependency (pure SVG + React state), so
+  it was checked directly in the preview pane via dispatched DOM events,
+  confirming correct hover-in/hover-out content and clearing.
+- Added `/methodology` to `accessibility.spec.ts`'s existing view list --
+  zero serious/critical violations. Full suite: **13/13 passing**, run
+  twice consecutively. `npm run build`/`oxlint` clean throughout.
+
+**Decisions (§13.2):** the toggle's 3 target zooms (7.2/10.5/14) are a UX
+judgment call reusing values already established elsewhere in the code
+(7.2 is `MapCanvas`'s existing default), not independently tuned. Choosing
+"zoom-only" over "zoom + fly to selected geography" (no centroid data
+available) is a scope call, not a silent simplification -- logged above.
+
+**⚠ Deviations / open items:** none new. The preview-pane rAF/compositing
+limitation is unchanged and, as in the two prior entries, doesn't leave any
+of this round's actual behavior unverified -- every animation-dependent
+piece (toggle, hover tooltip) has a passing real-browser test; everything
+else was checked directly.
+
+**Next:** R2 upload (needs owner infra decision) + production deploy;
+portfolio assets (screenshots, `CASE_STUDY.md`).
+
+---
+
 ## 2026-08-13 — Axe/Playwright suite (§12.2) implemented, run for real, 3 real bugs found and fixed (agent: sonnet-5)
 
 Implements §12.2's "Web checks": Playwright tests (search by PIN → panel;

@@ -6,10 +6,48 @@ import { downloadCsv } from '../lib/csv'
 
 type Metric = 'count' | 'value'
 
+interface BarHover {
+  x: number
+  y: number
+  title: string
+  detail: string
+}
+
+// Rendered inside the same <svg> and viewBox as the bars themselves, not as
+// an absolutely-positioned HTML overlay -- that avoids ever having to
+// convert SVG viewBox coordinates into on-screen pixels (which depends on
+// how much the SVG has been scaled by its container), so the tooltip stays
+// exactly anchored to the bar at any layout width. Fixed dark styling
+// regardless of page theme -- a small floating label reads fine against
+// either background, the same choice most chart tooltips make.
+function ChartTooltip({ x, y, title, detail, chartWidth }: BarHover & { chartWidth: number }) {
+  const fontSize = 10
+  const lineHeight = 13
+  const padX = 6
+  const padY = 5
+  const textWidth = Math.max(title.length * fontSize * 0.58, detail.length * (fontSize - 1) * 0.58)
+  const boxW = textWidth + padX * 2
+  const boxH = lineHeight * 2 + padY * 2 - 2
+  const boxX = Math.max(2, Math.min(x - boxW / 2, chartWidth - boxW - 2))
+  const boxY = Math.max(2, y - boxH - 10)
+  return (
+    <g pointerEvents="none">
+      <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={4} fill="#18181b" fillOpacity={0.92} />
+      <text x={boxX + padX} y={boxY + padY + fontSize} fontSize={fontSize} fontWeight={600} fill="#ffffff">
+        {title}
+      </text>
+      <text x={boxX + padX} y={boxY + padY + fontSize + lineHeight} fontSize={fontSize - 1} fill="#e4e4e7">
+        {detail}
+      </text>
+    </g>
+  )
+}
+
 export function DistrictExposureView() {
   const { label, summary, loading } = useActiveGeography()
   const { filters } = useFilters()
   const [metric, setMetric] = useState<Metric>('count')
+  const [hover, setHover] = useState<BarHover | null>(null)
 
   if (loading) return <p className="text-zinc-500">Loading exposure data…</p>
   if (!summary) return <p className="text-red-700">Data unavailable for this geography.</p>
@@ -30,6 +68,7 @@ export function DistrictExposureView() {
   const chartH = 220
   const barGroupW = 64
   const barW = 20
+  const metricLabel = metric === 'count' ? '% of parcels' : '% of value'
 
   return (
     <section>
@@ -88,10 +127,30 @@ export function DistrictExposureView() {
           const futH = (r.future / maxVal) * chartH
           return (
             <g key={r.classGroup}>
-              <rect x={x} y={chartH - curH} width={barW} height={curH} fill="#1d4ed8">
+              <rect
+                x={x} y={chartH - curH} width={barW} height={curH} fill="#1d4ed8"
+                onMouseEnter={() =>
+                  setHover({
+                    x: x + barW / 2, y: chartH - curH,
+                    title: `${r.classGroup} · current`,
+                    detail: `${metricLabel}: ${r.current.toFixed(1)}% (${(r.currentCell?.parcel_count ?? 0).toLocaleString()} parcels)`,
+                  })
+                }
+                onMouseLeave={() => setHover(null)}
+              >
                 <title>{`${r.classGroup} · current: ${r.current.toFixed(1)}%`}</title>
               </rect>
-              <rect x={x + barW + 4} y={chartH - futH} width={barW} height={futH} fill="#f97316">
+              <rect
+                x={x + barW + 4} y={chartH - futH} width={barW} height={futH} fill="#f97316"
+                onMouseEnter={() =>
+                  setHover({
+                    x: x + barW + 4 + barW / 2, y: chartH - futH,
+                    title: `${r.classGroup} · future`,
+                    detail: `${metricLabel}: ${r.future.toFixed(1)}% (${(r.futureCell?.parcel_count ?? 0).toLocaleString()} parcels)`,
+                  })
+                }
+                onMouseLeave={() => setHover(null)}
+              >
                 <title>{`${r.classGroup} · future: ${r.future.toFixed(1)}%`}</title>
               </rect>
               <text x={x + barW} y={chartH + 14} fontSize={9} textAnchor="middle" fill="currentColor">
@@ -106,6 +165,8 @@ export function DistrictExposureView() {
           <rect x={80} width={10} height={10} fill="#f97316" />
           <text x={94} y={9}>Future</text>
         </g>
+
+        {hover && <ChartTooltip {...hover} chartWidth={rows.length * barGroupW + 40} />}
       </svg>
 
       <table className="mt-6 w-full border-collapse text-sm">

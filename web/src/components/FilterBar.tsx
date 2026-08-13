@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { fetchGeographyIndex } from '../lib/data'
 import type { CountyIndexEntry, GeographyIndex } from '../types'
 import { BANDS, CLASS_GROUPS, LENSES } from '../types'
@@ -8,6 +9,8 @@ import { useFilters } from '../context/useFilters'
 export function FilterBar() {
   const { filters, setFilters } = useFilters()
   const [geo, setGeo] = useState<GeographyIndex | null>(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const { pathname } = useLocation()
 
   useEffect(() => {
     let cancelled = false
@@ -22,10 +25,34 @@ export function FilterBar() {
   const selectedCounty: CountyIndexEntry | undefined = geo?.counties.find(
     (c) => c.fips === filters.countyFips,
   )
+  const activeFilterCount = [
+    filters.countyFips, filters.muniFipsMun, filters.classGroups.length, filters.bands.length,
+    filters.minOverlapPct, filters.minAssessedValue,
+  ].filter(Boolean).length
+  // Band, min overlap %, and min assessed value only ever reach MapCanvas's
+  // parcel filter expression -- every other view ignores them, so changing
+  // one anywhere but Search & Map silently does nothing. Surface that
+  // instead of leaving it to be discovered by a confused click.
+  const mapOnlyFiltersInUse =
+    pathname !== '/' && (filters.bands.length > 0 || filters.minOverlapPct > 0 || filters.minAssessedValue > 0)
 
   return (
     <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-3 text-sm">
+      <div className="mx-auto max-w-7xl">
+        <button
+          type="button"
+          className="mb-2 flex w-full items-center justify-between text-sm font-medium sm:hidden"
+          onClick={() => setMobileOpen((o) => !o)}
+          aria-expanded={mobileOpen}
+          aria-controls="filter-controls"
+        >
+          <span>Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
+          <span aria-hidden="true">{mobileOpen ? '▲' : '▼'}</span>
+        </button>
+        <div
+          id="filter-controls"
+          className={`${mobileOpen ? 'flex' : 'hidden'} flex-wrap items-end gap-3 text-sm sm:flex`}
+        >
         <Field label="County" id="county-filter">
           <select
             id="county-filter"
@@ -157,6 +184,13 @@ export function FilterBar() {
           >
             Clear filters
           </button>
+        )}
+        </div>
+        {mapOnlyFiltersInUse && (
+          <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-500">
+            Band, min overlap, and min assessed value only filter the Search &amp; Map view — they
+            don't affect this page.
+          </p>
         )}
       </div>
     </div>

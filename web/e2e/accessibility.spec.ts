@@ -11,6 +11,7 @@ const VIEWS = [
   { path: '/summary', name: 'Jurisdiction Summary' },
   { path: '/exposure', name: 'District Exposure' },
   { path: '/ranked', name: 'Ranked Municipalities' },
+  { path: '/methodology', name: 'Methodology' },
 ]
 
 for (const view of VIEWS) {

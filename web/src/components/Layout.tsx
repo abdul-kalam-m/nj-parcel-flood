@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/summary', label: 'Jurisdiction Summary' },
   { to: '/exposure', label: 'District Exposure' },
   { to: '/ranked', label: 'Ranked Municipalities' },
+  { to: '/methodology', label: 'Methodology' },
 ]
 
 export function Layout() {

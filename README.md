@@ -29,8 +29,10 @@ by count and assessed value).
 ## Status
 
 Guide-Phase 7 (web app) closed out: search & map (incl. live P8 statewide
-address geocoding), jurisdiction summary, district exposure, ranked
-municipalities, global filters, CSV export. Municipality choropleth boundary
+address geocoding, a county/muni/parcel detail-level toggle, and hover
+tooltips on the map and charts), jurisdiction summary, district exposure,
+ranked municipalities, a methodology page (glossary + data sources +
+scoring), global filters, CSV export. Municipality choropleth boundary
 coverage closed 553/564 → 564/564. `09_validate.py` (§12.1 QA gates)
 separately run for real, statewide — **6 of 7 gates PASS**, the one FAIL
 being the already-known, owner-approved join-rate limitation carried from
@@ -38,13 +40,15 @@ Phase 1 (88.34%, below the guide's ≥97% gate).
 
 An axe/Playwright suite (§12.2 — PIN search → panel, filter cascades,
 district chart vs. summary JSON, export + disclaimer, axe scans across all
-4 views) is implemented and **passing 10/10**. Running it for real surfaced
-and fixed 3 genuine bugs, not just test-authoring issues — most notably a
-real accessible-name defect in the filter bar (implicit label-wrapping was
-folding a control's own option text into its computed name) and a serious
-axe/WCAG 4.1.2 violation in the search results list (an interactive button
-nested inside an ARIA `option` element). Running in a real browser, the
-suite also independently confirms the map's fly-to → parcel-panel chain
-end-to-end, closing a gap this session's preview-pane tooling had left
-unverified. See `PROGRESS.md` (2026-08-13) for full detail. R2 upload not
-yet done (needs a credentials/infra decision).
+5 views, plus checks for the new toggle and map tooltip) is implemented and
+**passing 13/13**. Running it for real has twice surfaced and fixed genuine
+bugs, not just test-authoring issues — including a real accessible-name
+defect in the filter bar, a serious axe/WCAG 4.1.2 violation in the search
+results list, and (caught via a design-review screenshot, not the test
+suite) a duplicated disclaimer on the new methodology page. A design pass
+after adding the new UI also fixed 3 real usability issues: filters that
+silently did nothing outside the map view now say so; the detail-level
+toggle is docked onto the map instead of floating next to a caption; the
+filter bar collapses on mobile instead of pushing all content below the
+fold. See `PROGRESS.md` (2026-08-13) for full detail. R2 upload not yet
+done (needs a credentials/infra decision).
