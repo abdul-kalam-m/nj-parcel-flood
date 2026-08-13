@@ -5,6 +5,139 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Live production deployment: R2 + Cloudflare Pages, 2 real bugs caught only by actually deploying (agent: sonnet-5)
+
+Owner: "add a live demo link to the README" -- there wasn't one; standing up
+real hosting for the first time (§6.2's locked stack, §7.1's R2 plan) was
+its own, larger piece of work than the phrase suggests, and it caught two
+genuine production-only bugs neither dev testing nor the existing 15-test
+Playwright suite (which only ever runs against the dev server) could have
+caught.
+
+**Done -- infrastructure:**
+- Authenticated `wrangler` via real OAuth (owner approved in chat first,
+  given no repo remote existed for a plain `git push` and no Cloudflare
+  session existed yet). **Refused to act on a prompt-injection attempt**
+  mid-setup: the owner pointed at
+  `https://developers.cloudflare.com/agent-setup/prompt.md`, which returned
+  content written in the assistant's own voice claiming skills/MCPs were
+  "already installed" and instructing `/reload-plugins` -- fabricated (a
+  markdown fetch can't install anything), flagged to the owner instead of
+  executed, and unnecessary anyway since the legitimate `wrangler` OAuth
+  path was already working.
+- Created R2 bucket `nj-parcel-flood-data` (owner had to enable R2 on the
+  account first -- a billing-gated dashboard step I can't do on anyone's
+  behalf) with public `r2.dev` access and CORS (GET/HEAD, Range header
+  allowed, Content-Range/Length/Accept-Ranges exposed -- PMTiles reads
+  specific byte ranges out of the archive, not the whole file).
+- Uploaded every file the web app actually fetches (search shards,
+  summaries, geography/ranked JSON, both `.pmtiles`) -- deliberately
+  skipped `artifacts/parcels/*.parquet` (182MB of per-county pipeline-
+  internal data `data.ts` never requests). Small files (985 of them) via
+  a 12-way-parallel `wrangler r2 object put` loop; 4 hit transient
+  connectivity errors under that concurrency and were individually
+  retried and confirmed, not silently accepted.
+- **`parcels.pmtiles` (727MB) needed real problem-solving, not just a
+  bigger timeout.** `wrangler r2 object put` hard-caps at 300MiB. Its
+  S3-compatible-API fallback (`aws s3 cp`, which auto-multiparts) reported
+  clean exit 0 every time yet the object never actually landed in the
+  bucket (confirmed via direct `head-object`/`list-multipart-uploads`
+  checks, not assumed from the exit code) -- root cause not fully
+  isolated, but consistent enough across 3 attempts (different partial
+  byte-counts each time, positions increasing) to point at this specific
+  sandboxed environment's networking under a single very-long-lived
+  connection, not the R2 side. Switched to fully manual multipart upload
+  (`split -b 64m`, `aws s3api create-multipart-upload` /
+  `upload-part` x12 / `complete-multipart-upload`) -- short-lived
+  individual requests instead of one multi-minute one. 3 of 12 parts hit
+  the same transient connection resets already seen on the small-file
+  batch, retried individually and confirmed; final object verified
+  byte-for-byte identical to the local file (762681177 bytes, matching
+  ETag with a real `PartsCount: 12`) and range-request-capable
+  (`Accept-Ranges: bytes`) via direct HTTP checks, not just a "the CLI
+  said success" assumption.
+  For the R2 API token this needed (separate from wrangler's own OAuth --
+  the S3-compatible data plane uses SigV4 access keys, not the bearer
+  token): had the owner create it and run `aws configure --profile r2`
+  themselves, in their own terminal, specifically so the secret never
+  passed through this session at all -- not logged, not pasted into chat,
+  not something I ever held even briefly. (One real hiccup: their first
+  `aws configure` run saved the literal string `None` as the region;
+  R2 wants `auto` -- fixed with `aws configure set`, no need to redo the
+  key entry.)
+- Created Cloudflare Pages project `nj-parcel-flood`, built with
+  `VITE_DATA_BASE_URL` pointed at the R2 public URL, deployed. Live at
+  **https://nj-parcel-flood.pages.dev**.
+
+**Done -- 2 real bugs, found only because this was an actual production
+deploy, not another dev-server check:**
+1. **MapLibre's own worker script never shipped at all.** `dist/` had no
+   worker chunk whatsoever -- confirmed by listing the build output
+   directly, then live in a real browser: `Failed to load module script...
+   MIME type of "text/html"` (Pages' SPA fallback serving `index.html` for
+   a path that didn't exist). The existing `optimizeDeps.exclude:
+   ['maplibre-gl']` in `vite.config.ts` only ever fixed *dev-server*
+   worker resolution (its own comment says so) -- production had simply
+   never been exercised before this deploy, in guide-Phase 7 or anywhere
+   else this session. First attempt (`?url` import + `setWorkerUrl()`)
+   got the file itself shipping with the right MIME type, but was still
+   wrong: **the worker script has its own internal
+   `import ... from "./maplibre-gl-shared.mjs"`**, and a bare static-asset
+   copy of the worker alone left that sibling import unresolved. Confirmed
+   precisely, not guessed, via Playwright's `page.on('worker')`: the
+   Worker object fired `created` then `closed` within milliseconds, before
+   a single tile request, with *zero* console error (worker module-eval
+   failures don't surface there) -- a false-clean signal that would have
+   let an incomplete fix ship if the check had stopped at "no more console
+   errors." Real fix: a build-time Vite plugin (`copyMaplibreWorkerFiles`
+   in `vite.config.ts`) that emits *both* files together at the site root
+   with their original unhashed names, preserving the exact relative path
+   the worker's own code expects -- not a one-off manual `public/` copy,
+   so it can't drift out of sync with whatever maplibre-gl version ends up
+   installed later. `setWorkerUrl()` call now gated to `import.meta.env
+   .PROD` only, since dev's existing fix already covers dev correctly and
+   this file only exists in prod's build output.
+2. **A genuinely confusing false alarm along the way, run down instead of
+   accepted at face value**: after the real fix, one verification pass
+   showed the *old* hashed worker URL still being requested and the
+   literal new path string absent from the built JS -- looked like the
+   fix hadn't taken. Traced to a stale Vite transform cache from rapid
+   back-to-back builds during debugging (`node_modules/.vite`), not a code
+   defect: a `rm -rf dist node_modules/.vite` clean rebuild reproduced the
+   correct output every time after. Logged so a future "the fix isn't
+   applying" moment isn't re-debugged from scratch.
+
+**Done -- full verification, real browser, real production URL, not
+assumed:** `page.on('worker')` shows `created` on `/maplibre-gl-worker.mjs`
+staying alive through real tile traffic; actual `.pbf` basemap tile
+requests and real `boundaries.pmtiles`/`parcels.pmtiles` range requests to
+the R2 bucket confirmed firing; zero console errors; full search-by-PIN →
+flyTo → parcel-panel flow confirmed working on the live URL end-to-end
+(score drivers, band, all real data); all 5 routes load clean. Full local
+Playwright/axe suite re-run after every source change (dev server only,
+by design -- doesn't touch the prod deploy): **15/15, unaffected**
+throughout.
+
+**Decisions (§13.2):** all data (including the small JSON this repo also
+keeps committed) is served from one R2 origin in production, not split
+across R2 (big files) and Pages (small files) as `.gitignore`'s original
+comment sketched -- `data.ts` only supports one `DATA_BASE_URL`, and
+splitting hosting for a handful of small files would need real code
+changes for no real benefit. `.gitignore`'s comment updated to match.
+
+**⚠ Deviations / open items:** the exact root cause of `aws s3 cp`
+silently truncating large uploads in this specific sandboxed environment
+was never fully isolated (worked around via manual multipart instead) --
+noted in case it recurs on a future large-file upload; the manual-
+multipart path is the proven-reliable one going forward, not `aws s3 cp`
+directly, for anything over a few hundred MB.
+
+**Next:** portfolio assets (screenshots, `CASE_STUDY.md`); consider a
+custom domain for the Pages deployment (optional polish, `pages.dev` works
+fine as-is).
+
+---
+
 ## 2026-08-13 — Full visual overhaul: real color/type/elevation system (agent: sonnet-5)
 
 Owner: "Push it to Claude Design to give this dashboard a UI Overhaul" —

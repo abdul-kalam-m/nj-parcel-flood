@@ -1,5 +1,7 @@
 # NJ Parcel Flood Risk Dashboard
 
+**Live demo: [nj-parcel-flood.pages.dev](https://nj-parcel-flood.pages.dev)**
+
 A statewide New Jersey dashboard (~3.4M parcels, 21 counties, 564 municipalities) joining
 MOD-IV tax-assessment attributes to parcel geometry, scoring each parcel 0–100 for flood
 risk against current (FEMA NFHL) and future (NJDEP climate/SLR) hazard layers plus
@@ -60,6 +62,16 @@ overhaul," went further: a real color system (a custom teal `brand` scale
 replacing Tailwind's default blue everywhere, contrast-verified and
 axe-confirmed), elevation (shadows + rounded corners instead of flat 1px
 borders), a real type scale, and the risk-band color ramp reused in stat
-cards and tables instead of only appearing on the map. See `PROGRESS.md`
-(2026-08-13, several entries) for full detail. R2 upload not yet done
-(needs a credentials/infra decision).
+cards and tables instead of only appearing on the map.
+
+**Live on Cloudflare Pages + R2** (tiles, search shards, and summaries all
+served from R2; the site itself from Pages). Deploying for real — not
+just testing against the dev server — caught 2 genuine production-only
+bugs: MapLibre's own worker script never actually shipped in the
+production build, and fixing that fully required resolving a sibling
+internal import too (a first attempt looked complete but the worker still
+died silently on load, caught precisely via Playwright's worker-lifecycle
+API, not a console error). Both root-caused and confirmed fixed against
+the real live URL — actual tile traffic, full search → parcel-panel flow,
+all 5 routes. See `PROGRESS.md` (2026-08-13, "Live production deployment")
+for full detail.

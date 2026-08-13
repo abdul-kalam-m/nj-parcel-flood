@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import {
-  MapLibreMap, NavigationControl, Popup, addProtocol,
+  MapLibreMap, NavigationControl, Popup, addProtocol, setWorkerUrl,
   type ExpressionSpecification, type MapLayerMouseEvent,
 } from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
@@ -8,6 +8,24 @@ import { DATA_BASE_URL } from '../config'
 import { useFilters } from '../context/useFilters'
 import { BAND_LABELS, BAND_MATCH_EXPRESSION } from '../lib/bands'
 import type { BoundaryTileProps, ParcelTileProps } from '../types'
+
+// Prod only: dev's existing fix for maplibre-gl's worker (optimizeDeps.exclude
+// below) already makes its own default `new Worker(new URL(...))` reference
+// resolve correctly there, so this isn't needed -- and calling it
+// unconditionally would point dev at a file vite.config.ts's build-only
+// copy-plugin never emits in dev mode. In prod, that plugin emits
+// maplibre-gl-worker.mjs *and* its sibling maplibre-gl-shared.mjs (the
+// worker's own internal `import ... from "./maplibre-gl-shared.mjs"`) at
+// the site root with unhashed names, so this relative import resolves --
+// a plain hashed-asset copy of the worker alone left that import
+// unresolved: the browser created the Worker, its module eval threw, and
+// it closed within milliseconds with no console error, before ever
+// requesting a single tile (confirmed live via Playwright's
+// page.on('worker') -- 'created' then 'closed', not caught by the
+// pane-limited manual check that shipped the original, incomplete fix).
+if (import.meta.env.PROD) {
+  setWorkerUrl('/maplibre-gl-worker.mjs')
+}
 
 // P9 basemap (§4/§6.2): OpenFreeMap vector tiles, no API key, no Mapbox/Google dependency.
 const BASEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty'

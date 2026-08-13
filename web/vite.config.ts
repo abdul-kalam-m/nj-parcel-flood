@@ -61,8 +61,42 @@ function serveArtifacts(): Plugin {
   }
 }
 
+// Production-build-only bug (confirmed live on the first real deploy, not
+// caught in dev): maplibre-gl's own worker script (maplibre-gl-worker.mjs)
+// has its own internal `import ... from "./maplibre-gl-shared.mjs"`.
+// MapCanvas.tsx points setWorkerUrl() at this file directly rather than
+// letting a bare `new Worker(new URL(...))` reference go through Vite's
+// dep-optimizer (excluded below, for a *different*, dev-only reason) --
+// but a plain static-asset copy of just the worker file leaves that
+// sibling import unresolved: the browser creates the Worker, its module
+// eval throws on the unresolved import, and it closes immediately, with
+// no console error surfacing (confirmed via Playwright's page.on('worker')
+// -- created then closed within milliseconds, zero tile requests ever
+// follow). Fix: copy *both* files into the build output with their
+// original (unhashed) names side by side, preserving the exact relative
+// path maplibre-gl's own worker code expects -- not a one-off manual
+// public/ copy, so it can't silently drift out of sync with whatever
+// maplibre-gl version actually ends up installed.
+function copyMaplibreWorkerFiles(): Plugin {
+  const distDir = path.resolve(import.meta.dirname, 'node_modules/maplibre-gl/dist')
+  const files = ['maplibre-gl-worker.mjs', 'maplibre-gl-shared.mjs']
+  return {
+    name: 'copy-maplibre-worker-files',
+    apply: 'build',
+    generateBundle() {
+      for (const file of files) {
+        this.emitFile({
+          type: 'asset',
+          fileName: file,
+          source: fs.readFileSync(path.join(distDir, file)),
+        })
+      }
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), serveArtifacts()],
+  plugins: [react(), tailwindcss(), serveArtifacts(), copyMaplibreWorkerFiles()],
   server: {
     fs: { allow: ['..'] },
   },

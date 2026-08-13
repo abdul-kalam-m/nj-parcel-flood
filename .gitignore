@@ -7,8 +7,13 @@ data/processed/
 
 # §7.1 "Artifacts (R2 unless noted)": tiles/parcels/search are the "unless noted"
 # exception's opposite -- meant for Cloudflare R2, not this repo (parcels.pmtiles
-# alone is >450MB). Only artifacts/summaries/ + ranked_municipalities.json (small,
-# aggregate-only JSON, explicitly Pages-hosted) are committed.
+# alone is >727MB). artifacts/summaries/ + ranked_municipalities.json (small,
+# aggregate-only JSON) stay committed here too, since they're still handy for local
+# dev/inspection -- but in production they're *also* mirrored to the same R2 bucket
+# as everything else under tiles/search/ (PROGRESS.md 2026-08-13, "live demo"), not
+# served from Pages directly as originally sketched here: the app only supports one
+# DATA_BASE_URL, so splitting hosting across two origins for these files specifically
+# would need real code changes for no real benefit.
 artifacts/tiles/
 artifacts/parcels/
 artifacts/search/
@@ -28,3 +33,6 @@ web/dist/
 # Local env
 *.local
 .env
+
+# wrangler CLI's local account/session cache (Cloudflare R2 + Pages deploys, §7.1/§6.2)
+.wrangler/
