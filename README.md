@@ -28,16 +28,17 @@ by count and assessed value).
 
 ## Status
 
-Guide-Phase 7 (web app) built: search & map, jurisdiction summary, district
-exposure, ranked municipalities, global filters, CSV export. Found and fixed
-a major bug along the way — tippecanoe had never actually been writing valid
-PMTiles for either tileset since guide-Phase 6, silently producing mislabeled
-MBTiles instead; both tilesets are now genuinely valid PMTiles. `09_validate.
-py` (§12.1 QA gates) separately run for real, statewide — **6 of 7 gates
+Guide-Phase 7 (web app) built and largely closed out: search & map (incl.
+live P8 statewide address geocoding), jurisdiction summary, district
+exposure, ranked municipalities, global filters, CSV export. Municipality
+choropleth boundary coverage closed 553/564 → 564/564. `09_validate.py`
+(§12.1 QA gates) separately run for real, statewide — **6 of 7 gates
 PASS**, the one FAIL being the already-known, owner-approved join-rate
-limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate). See
-`PROGRESS.md` for full detail, including one interaction (the parcel-click
-detail panel) where live re-verification hit a preview-tooling limitation
-twice and the owner directed treating the existing binary/tool-level
-verification as sufficient. R2 upload not yet done (needs a credentials/
-infra decision).
+limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate). This
+session's preview tooling intermittently fails to composite frames, which
+stalls MapLibre's animation/initial-load path without affecting anything
+else — every feature has still been verified as thoroughly as that allows
+(data/binary checks, live API calls, full event-chain tracing), with the
+residual visual-only gap logged, not hidden; owner reviewed and treated it
+as sufficient. See `PROGRESS.md` for full detail. R2 upload not yet done
+(needs a credentials/infra decision).

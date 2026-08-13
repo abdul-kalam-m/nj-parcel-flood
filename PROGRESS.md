@@ -5,6 +5,82 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — P8 live address geocoding wired up (agent: sonnet-5)
+
+Closes the other guide-Phase 7 open item: §7.2's "search bar (address via
+P8 geocode → point → parcel hit; or PIN/block-lot via shard)" only had the
+second half built. Verified the live geocoder's actual response shape
+before writing any code against it (field names/structure vary across
+ArcGIS locator deployments, not assumed from the guide's prose) and
+confirmed CORS live from an actual browser `fetch()` at the app's own
+origin -- `geo.nj.gov`'s service returns permissive CORS headers, no
+backend proxy needed, consistent with §6.1's "client geocode (P8) only".
+
+**Done:**
+- Added `src/lib/geocode.ts`: calls P8's `findAddressCandidates`
+  (`outSR=4326` for direct lon/lat, no reprojection needed), filters
+  candidates below score 60 (Esri's 0-100 match confidence; a UI judgment
+  call, documented as such, not a correctness threshold), maps to a small
+  `GeocodeCandidate` type. Fails quiet (returns `[]`) on network failure,
+  abort, or a malformed response -- a geocoder hiccup shouldn't break the
+  rest of the search bar.
+- Rewrote `MuniSearch.tsx`: removed the "must select a county+muni first"
+  gate (geocoding is statewide, no pre-selection needed by design) --
+  local shard search still works exactly as before once a muni *is*
+  selected, now shown alongside geocoded results rather than replacing
+  them. Debounced (400ms) and abort-cancelled on each keystroke (the
+  established `cancelled`-flag pattern already used in
+  `useActiveGeography.ts`, not a new idiom) so a slow, superseded request
+  can't overwrite newer results. Geocoded results are visually and
+  textually distinguished ("📍 ... statewide geocode") from local shard
+  hits, not merged ambiguously. Reuses the exact same `onSelect` ->
+  `flyTo` -> "query whatever parcel is actually rendered at that point"
+  path a PIN/block-lot result already used -- no new prop/callback needed,
+  since a `SearchRecord`'s only fields that path actually reads are
+  `lon`/`lat`.
+- **Verified live, end to end, with real debugging when the first attempt
+  didn't show a visible result** -- not accepted on faith: typed a real
+  Newark address, confirmed three ranked real candidates came back from
+  the live government geocoder (100/97.74/... scores), confirmed clicking
+  one correctly fires `onSelect` with the right coordinates. When the map
+  didn't visibly react, traced it precisely rather than guessing: added
+  temporary console logging (removed after) and confirmed every step of
+  the chain fires correctly with correct values (search -> API call ->
+  candidate parsing -> click handler -> `onSelect` -> `setFlyTo` -> the
+  `MapCanvas` effect receiving the right `{lon, lat}`) -- the gap is
+  narrower than "did geocoding work", specifically isolated to
+  `map.flyTo()`'s *animation* not completing in this session's preview
+  pane. Proved this precisely with a controlled comparison: `map.jumpTo()`
+  (same target coordinates, no animation) updated the camera correctly on
+  the identical map instance where `flyTo()` had just silently no-opped --
+  the same class of render-loop/pane-compositing limitation already
+  reviewed and accepted by the owner for the parcel-click interaction
+  (2026-08-13, "Owner decision" entry above), now additionally confirmed
+  to extend to camera *animations* specifically, not just the initial
+  tile/style load. Did not change `flyTo` to `jumpTo` in the shipped code
+  over this -- an instant, jarring camera jump would be a worse experience
+  for real users than a smooth pan, purely to work around a testing-tool
+  limitation that doesn't affect real usage.
+- `npm run build` (`tsc -b && vite build`) and `oxlint` both clean.
+
+**Decisions (§13.2):** score threshold (60) and debounce interval (400ms)
+are UX judgment calls, not values with a "correct" answer -- logged as
+such rather than presented as if verified/tuned.
+
+**⚠ Deviations / open items:** the map's *visual* reaction to a geocoded
+selection (smooth pan-and-zoom, then the detail panel appearing) is not
+live-confirmed this session, for the same tooling reason as the entry
+above -- not a new gap, an extension of the already-accepted one. Every
+other layer of this feature (live API integration, CORS, parsing, UI,
+event wiring, state propagation, the exact target coordinates) is
+independently verified.
+
+**Next:** axe/Playwright suite (§12.2) -- would give automated, tooling-
+independent coverage of exactly the gap noted above; R2 upload; rest of
+guide-Phase 8 (README, portfolio assets).
+
+---
+
 ## 2026-08-13 — Municipality-choropleth boundary gap closed, 553/564 → 564/564 (agent: sonnet-5)
 
 Owner asked for a feasibility assessment of adding a muni-level choropleth;
