@@ -5,6 +5,134 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Guide-Phase 6 (§11): tiles + search index, statewide (agent: sonnet-5)
+
+**Tooling route (§6.2 explicitly asks this be documented): Docker, not WSL.**
+Tried WSL first (Ubuntu, already installed) since it was already running --
+blocked: `apt-get install tippecanoe` needs an interactive `sudo` password
+this session has no way to supply. Pivoted to Docker (daemon wasn't running,
+started it, ~30s). `felt/tippecanoe` (the actively-maintained upstream fork)
+turned out not to be published under that name on Docker Hub *or* GHCR
+despite showing up as an "upstream" reference in another image's
+description -- used `klokantech/tippecanoe` (v1.24.1) instead, verified live
+it actually runs before building anything on top of it.
+
+**Done:**
+- `07_tiles.py`: `tiles/parcels.pmtiles` (z13-16, minimal attrs -- pin, band,
+  class_group, current/future flags, per §7.1's own "minimal attrs"
+  instruction, not the full score schema) and `tiles/boundaries.pmtiles`
+  (counties + municipalities as two named layers, z0-12, summary attrs from
+  the aggregates phase).
+- **Found a real bug in the municipality-boundary matching, the hard way.**
+  County/tract boundaries so far all came from services that share this
+  project's own FIPS/GEOID keys directly. Municipality boundaries don't --
+  TIGER's county-subdivision service (`Places_CouSub_ConCity_SubMCD`, a
+  *different* MapServer than the one already used for counties) has its own
+  naming, so matching to this project's own `mun_code` needs a normalized
+  name join. First version normalized by *stripping* the municipal-type word
+  (BOROUGH/TOWNSHIP/etc.) entirely -- silently collapsed 19 pairs of
+  genuinely distinct, separately-incorporated NJ municipalities that share a
+  base name onto the same key (Berlin Boro *and* Berlin Twp are two real,
+  different towns; so are Chatham Boro/Twp, Egg Harbor City/Twp, 17 more
+  pairs). The resulting many-to-many join fan-out inflated the muni count
+  past 564 -- the impossible arithmetic (more output rows than input rows on
+  a left join) was the tell, not a manual audit. Fixed by *canonicalizing*
+  the type word (BOROUGH->BORO, TOWNSHIP->TWP, etc.) instead of stripping it,
+  preserving exactly the distinction that matters while still collapsing
+  formatting noise (hyphen/space/none, "and" insertion, TIGER's full words
+  vs. MOD-IV's abbreviations, a redundant doubled type-suffix on "Ventnor
+  City *city*").
+  - Iteratively reduced genuine formatting-only mismatches from 31 -> 20 -> 12
+    unmatched (of 565 valid TIGER rows) via systematic, generalizable fixes
+    (MOUNT->MT, SOUTH->SO, NORTH->NO, HEIGHTS->HGHTS, TWNSHP/TWSHP->TWP),
+    each verified against the live data before adding, not guessed.
+  - **Stopped at 12, on purpose, not from running out of ideas.** The
+    residual spans genuinely different root causes, not one more formatting
+    rule away from zero: a word-order difference ("City of Orange" vs.
+    MOD-IV's "Orange City", both correctly reflecting Orange NJ's actual
+    quirky legal name); an apparent **source-data quality issue** in MOD-IV
+    itself, not a formatting gap -- several real Essex County boroughs
+    (Caldwell, North Caldwell, Essex Fells) are recorded with "TWP" as their
+    type in MOD-IV despite being boroughs in reality (one entry literally
+    reads "CALDWELL BORO TWP", both words at once); and Pine Valley, NJ's
+    famously tiny (~15-resident, mostly-golf-course) borough, which may
+    simply have zero named (MOD-IV-matched) parcels to derive a name from at
+    all. Forcing any of these to match would risk papering over a real
+    signal rather than fixing a formatting difference -- logged clearly
+    (never silently dropped) instead.
+- `08_search_index.py`: `search/{fips}/{mun}.json.gz` (address/block-lot/PIN
+  -> PIN + centroid) and `parcels/{fips}/{mun}.parquet` (full scored rows).
+  Centroid computed in the working CRS (EPSG:26918) then reprojected to
+  WGS84 for output, not computed directly in a geographic CRS. Uses the
+  same `{county FIPS}{mun_code suffix}` muni-key convention as the
+  aggregates phase -- and since this keys directly off this project's own
+  `mun_code` (no TIGER name-matching involved), produced all 564 shards
+  cleanly, no residual gap the way boundaries.pmtiles has one.
+- **Caught a real repo-hygiene issue before committing, not after**: this
+  phase's own outputs (a 461MB `parcels.pmtiles`, 182MB of per-muni parquet,
+  62MB of search shards) would have been silently swept into the next
+  `git add -A` -- `.gitignore` only excluded `data/raw/`/`data/processed/`,
+  not the new `artifacts/tiles|parcels|search/` directories §7.1 explicitly
+  marks "R2 unless noted" (i.e. *not* meant for this repo at all, unlike the
+  small `artifacts/summaries/` JSON from the aggregates phase). Fixed before
+  staging anything.
+- Added `pipeline/tests/test_tiles.py` (5 offline tests): the formatting-
+  normalization cases handled, and -- the actual regression test for the
+  bug above -- an explicit assertion that two synthetic Boro/Twp pairs
+  produce exactly 2 matched rows, never 4, plus an unmatched-is-logged-not-
+  forced case. Full suite: **78/78 passing** (73 from Phases 1-4b/5 + 5 new).
+- Ran statewide. **Results, independently verified, not just trusted from
+  the build log:**
+  - `parcels.pmtiles`: **461 MB** (budget: ≤4 GB), all 3,478,722 parcels
+    confirmed read by tippecanoe's own feature count.
+  - `boundaries.pmtiles`: 2.1 MB, 21 counties + 553 (of 564) municipalities.
+  - **564/564 municipality search shards written** (`search/{fips}/{mun}
+    .json.gz`), keyed directly off `mun_code`, not TIGER matching.
+  - **§11's own stated gate, run for real**: 20 randomly sampled parcels
+    (one per county, distinct RNG seed from the sample draw) looked up by
+    PIN against their county+muni's search shard -- **20/20 resolved**.
+
+**Decisions (§13.2):**
+- `klokantech/tippecanoe` (Docker Hub, v1.24.1) is the tippecanoe image in
+  use, not `felt/tippecanoe` -- recorded since a future session might
+  otherwise assume the more famous name is what's actually configured.
+- Municipality-boundary matching accepts a 12/564 (2.1%) gap in
+  `boundaries.pmtiles` rather than forcing every TIGER row to match --
+  documented above; `parcels.pmtiles` (the core per-parcel layer) and the
+  search index are both unaffected, since neither depends on TIGER's
+  county-subdivision boundaries at all.
+
+**⚠ Deviations / open items:**
+- The Phase 1 join-rate limitation (88.34% vs required ≥97%) is still
+  carried forward unresolved, per the owner's 2026-08-12 direction.
+- The 12 unmatched municipalities in `boundaries.pmtiles` (listed in this
+  session's tool output, not reproduced in full here) means those 12 towns
+  won't render in the municipality choropleth layer specifically -- they
+  still have full data everywhere else (parcels.pmtiles, search, summaries
+  JSON, scores). Worth a look if a future session has a reason to (e.g. an
+  authoritative NJ MOD-IV-code-to-Census-GEOID crosswalk, if one exists,
+  would sidestep name-matching entirely) -- not blocking.
+- **R2 upload itself was not attempted** -- §6.2/§7.1 call for a Cloudflare
+  R2 bucket (public, CORS-enabled) as the actual hosting destination for
+  these artifacts, which means real cloud infrastructure and credentials
+  this session doesn't have and shouldn't set up unilaterally. The local
+  build artifacts (`artifacts/tiles/`, `artifacts/parcels/`,
+  `artifacts/search/`, all gitignored) are ready to upload whenever that's
+  decided.
+- Two Essex County MOD-IV boro/twp mislabels (Caldwell, North Caldwell,
+  Essex Fells all recorded "TWP") found as a side effect of this phase --
+  doesn't affect scoring (class_group/geometry/value are independent of
+  this label) or Phase 1's own crosswalk (property class, not municipality
+  type), only this phase's boundary-name matching -- noted for awareness,
+  not acted on further.
+
+**Next:** guide-Phase 7 (web app, §7.2) -- Vite + React + MapLibre, or
+guide-Phase 8 (`09_validate.py` full QA gates) first, depending on how the
+owner wants to sequence the remaining work; the guide's own table lists Web
+App before QA+launch.
+
+---
+
 ## 2026-08-13 — Phase 5 (§11): geography × class × lens aggregates, statewide (agent: sonnet-5)
 
 **⚠ Phase-numbering correction first:** the two entries below this one label

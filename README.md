@@ -28,10 +28,10 @@ by count and assessed value).
 
 ## Status
 
-Guide-Phase 5 (aggregates, §5.5/§11) done, statewide — county/muni/class-group
-× current/future/either rollups for all 3,478,722 parcels and 564
-municipalities, rollup invariant (muni sums = county = state, ±0.1%)
-independently verified. Guide-Phase 6 (tiles + search index) next. Known
-limitation carried from Phase 1, owner-approved: statewide MOD-IV join rate is
-88.34%, below the guide's ≥97% gate. See `PROGRESS.md` and
-`AGGREGATE_SUMMARY.md`.
+Guide-Phase 6 (tiles + search index, §11) done, statewide — `parcels.pmtiles`
+(461MB, budget ≤4GB), `boundaries.pmtiles`, and all 564 municipality search
+shards built; the guide's own "20 test lookups resolve" gate passed 20/20.
+R2 upload not yet done (needs a credentials/infra decision). Guide-Phase 7
+(web app) or 8 (`09_validate.py`) next. Known limitation carried from Phase 1,
+owner-approved: statewide MOD-IV join rate is 88.34%, below the guide's ≥97%
+gate. See `PROGRESS.md`.

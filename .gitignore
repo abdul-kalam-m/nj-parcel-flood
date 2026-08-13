@@ -5,6 +5,14 @@
 data/raw/
 data/processed/
 
+# §7.1 "Artifacts (R2 unless noted)": tiles/parcels/search are the "unless noted"
+# exception's opposite -- meant for Cloudflare R2, not this repo (parcels.pmtiles
+# alone is >450MB). Only artifacts/summaries/ + ranked_municipalities.json (small,
+# aggregate-only JSON, explicitly Pages-hosted) are committed.
+artifacts/tiles/
+artifacts/parcels/
+artifacts/search/
+
 # Python / uv
 .venv/
 __pycache__/

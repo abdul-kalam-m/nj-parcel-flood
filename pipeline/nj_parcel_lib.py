@@ -137,6 +137,19 @@ COUNTY_FIPS: dict[str, str] = {
 # P7: Census TIGERweb -- same service family as the FloodOps projects.
 TIGERWEB_STATE_COUNTY = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer"
 TIGERWEB_TRACTS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer"
+# County-subdivision (municipality) boundaries for Phase 6's boundaries.pmtiles
+# -- NOT the same service as State_County (which only has States/Counties
+# layers, no subdivision level). Verified live 2026-08-13: NJ returns 570
+# rows, 5 of which (COUSUBCC='Z9') are literally named "County subdivisions
+# not defined" -- Census placeholder geography for unincorporated area (open
+# water off 5 shore counties), not real municipalities; excluding those
+# leaves 565 vs. this project's own established 564 mun_code count, one
+# unresolved record short of a hand-verified explanation -- 07_tiles.py's own
+# name-normalized join against `mun_code`/`mun_name` (Phase 1) surfaces
+# whichever one doesn't match as a natural byproduct, not chased further by
+# hand here.
+TIGERWEB_COUSUB = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer"
+TIGERWEB_COUSUB_LAYER = 22  # "Census 2020" group, boundaries fixed regardless of ACS vintage (same reasoning as tracts)
 # This MapServer bundles several "Census Tracts" layers (each paired with a
 # different ACS attribute-table vintage: 2024, 2025, plain 2020) -- verified
 # live 2026-08-13 that layer 10 ("Census 2020" group) and the ungrouped
