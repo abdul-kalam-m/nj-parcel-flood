@@ -15,6 +15,19 @@ other stated option (§6.2), WSL-native install, was tried first and blocked:
 supply. Documented here per §6.2's explicit "document the chosen route"
 instruction.
 
+**Real bug found and fixed while building the web app (guide-Phase 7), not
+here at build time:** this tippecanoe image's binary has no actual PMTiles
+output support -- `tippecanoe --help` only documents `--output=x.mbtiles`.
+Handing it an `.pmtiles` filename doesn't error, it silently writes MBTiles
+(SQLite) content to that path regardless of the extension -- confirmed live,
+the file's own first bytes read "SQLite format 3", not PMTiles' "PMTi"
+magic. Every `.pmtiles` file this project had produced before the web app
+tried to actually read one this way was mislabeled MBTiles, not caught
+because file-size/row-count checks don't inspect internal format. Fixed by
+having tippecanoe output real `.mbtiles`, then converting with
+`protomaps/go-pmtiles convert` (the format's own canonical converter) to
+produce the genuine `.pmtiles` file; the mbtiles intermediate is discarded.
+
 County-subdivision (municipality) boundaries come from a different TIGERweb
 service than the one already used for counties/tracts (`Places_CouSub_
 ConCity_SubMCD`, not `State_County`) -- verified live it returns 570 rows for
@@ -46,6 +59,7 @@ TILES_DIR = lib.ARTIFACTS / "tiles"
 GEOJSONL_DIR = lib.RAW / "_geojsonl"  # scratch, gitignored (under data/raw/)
 
 TIPPECANOE_IMAGE = "klokantech/tippecanoe"
+PMTILES_IMAGE = "protomaps/go-pmtiles"  # the format's own canonical converter
 PARCEL_MIN_ZOOM, PARCEL_MAX_ZOOM = 13, 16
 
 
@@ -190,6 +204,16 @@ def write_boundaries_geojsonl(force: bool) -> tuple[object, object]:
 
 
 def write_parcels_geojsonl(fips_list: list[str]) -> object:
+    # Attrs are rich enough for a full parcel detail panel (§7.2: "attrs,
+    # flags, score + drivers §5.3") straight from a map click -- no second
+    # fetch to parcels/{fips}/{mun}.parquet needed for the base experience,
+    # so the map doesn't depend on a WASM parquet reader for its core
+    # interaction (§7.2: "map interactions degrade gracefully without
+    # WASM" -- read as "the base app shouldn't need WASM at all", DuckDB-WASM
+    # is the explicit §7.4 *stretch* explorer, not this). First version of
+    # this function only carried pin/band/class_group/cur/fut/fut_cov --
+    # found the gap building the web app itself (guide-Phase 7), fixed here
+    # rather than shipping a detail panel missing its own score/drivers.
     GEOJSONL_DIR.mkdir(parents=True, exist_ok=True)
     out_path = GEOJSONL_DIR / "parcels.geojsonl"
     n_written = 0
@@ -201,24 +225,42 @@ def write_parcels_geojsonl(fips_list: list[str]) -> object:
                 print(f"  [SKIP] {fips}: parcel_geoms/parcel_scores not found")
                 continue
             geoms = gpd.read_file(geoms_path)
-            scores = pd.read_parquet(
-                scores_path, columns=["pin", "band", "sfha_pct", "fut_pct", "fut_coverage"])
+            scores = pd.read_parquet(scores_path, columns=[
+                "pin", "band", "score", "sfha_pct", "mod_risk_pct", "fut_pct", "fut_coverage",
+                "C_cur", "C_fut", "C_loss"])
             if len(geoms) != len(scores) or not (geoms["pin"].to_numpy() == scores["pin"].to_numpy()).all():
                 raise ValueError(f"{fips}: pin sequence mismatch, parcel_geoms vs parcel_scores")
-            master = pd.read_parquet(PARCEL_MASTER / f"{fips}.parquet", columns=["pin", "class_group"])
+            master = pd.read_parquet(PARCEL_MASTER / f"{fips}.parquet", columns=[
+                "pin", "class_group", "prop_class", "situs_address", "block", "lot", "qual",
+                "net_value", "county", "mun_name"])
             if not (geoms["pin"].to_numpy() == master["pin"].to_numpy()).all():
                 raise ValueError(f"{fips}: pin sequence mismatch, parcel_geoms vs parcel_master")
 
             current_flag = (scores["sfha_pct"] > 0).to_numpy()
             future_flag = (scores["fut_pct"].fillna(0) > 0).to_numpy()
             fut_coverage = scores["fut_coverage"].to_numpy()
+            net_value = master["net_value"].to_numpy()
+            fut_pct = scores["fut_pct"].to_numpy()
             for i in range(len(geoms)):
                 attrs = {
                     "pin": geoms["pin"].iat[i], "band": scores["band"].iat[i],
+                    "score": int(scores["score"].iat[i]),
                     "class_group": master["class_group"].iat[i],
+                    "prop_class": master["prop_class"].iat[i],
                     "cur": bool(current_flag[i]),
                     "fut": bool(future_flag[i]) if fut_coverage[i] else None,
                     "fut_cov": bool(fut_coverage[i]),
+                    "sfha_pct": round(float(scores["sfha_pct"].iat[i]), 4),
+                    "mod_risk_pct": round(float(scores["mod_risk_pct"].iat[i]), 4),
+                    "fut_pct": round(float(fut_pct[i]), 4) if fut_coverage[i] else None,
+                    "c_cur": round(float(scores["C_cur"].iat[i]), 4),
+                    "c_fut": round(float(scores["C_fut"].iat[i]), 4),
+                    "c_loss": round(float(scores["C_loss"].iat[i]), 4),
+                    "situs_address": master["situs_address"].iat[i],
+                    "block": master["block"].iat[i], "lot": master["lot"].iat[i],
+                    "qual": master["qual"].iat[i],
+                    "net_value": float(net_value[i]) if pd.notna(net_value[i]) else None,
+                    "county": master["county"].iat[i], "mun_name": master["mun_name"].iat[i],
                 }
                 fh.write(json.dumps({"type": "Feature", "properties": attrs,
                                       "geometry": geoms.geometry.iat[i].__geo_interface__}) + "\n")
@@ -245,6 +287,23 @@ def run_tippecanoe(args: list[str]) -> None:
     print(result.stderr)  # tippecanoe logs progress to stderr even on success
 
 
+def mbtiles_to_pmtiles(mbtiles_name: str, pmtiles_name: str) -> None:
+    """tippecanoe (this image) only actually writes MBTiles, whatever
+    extension you give it -- see module docstring. Converts for real with
+    go-pmtiles, then removes the mbtiles intermediate."""
+    cmd = [
+        "docker", "run", "--rm",
+        "-v", f"{TILES_DIR}:/tiles",
+        PMTILES_IMAGE, "convert",
+        f"/tiles/{mbtiles_name}", f"/tiles/{pmtiles_name}",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"go-pmtiles convert failed (exit {result.returncode}):\n{result.stderr}")
+    print(result.stderr)  # go-pmtiles logs its progress bar to stderr too
+    (TILES_DIR / mbtiles_name).unlink()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="Re-fetch boundary sources even if cached.")
@@ -259,11 +318,12 @@ def main() -> int:
         print("Building boundaries.pmtiles...")
         county_path, muni_path = write_boundaries_geojsonl(args.force)
         run_tippecanoe([
-            "-o", "/tiles/boundaries.pmtiles", "--force",
+            "-o", "/tiles/boundaries.mbtiles", "--force",
             "-L", f"counties:/geojsonl/{county_path.name}",
             "-L", f"munis:/geojsonl/{muni_path.name}",
             "-Z0", "-z12",
         ])
+        mbtiles_to_pmtiles("boundaries.mbtiles", "boundaries.pmtiles")
         print(f"  Wrote {TILES_DIR / 'boundaries.pmtiles'}")
 
     if not args.skip_parcels:
@@ -275,12 +335,13 @@ def main() -> int:
             fips_list = sorted(lib.COUNTY_FIPS.values())
         parcels_path = write_parcels_geojsonl(fips_list)
         run_tippecanoe([
-            "-o", "/tiles/parcels.pmtiles", "--force",
+            "-o", "/tiles/parcels.mbtiles", "--force",
             "-l", "parcels",
             "-Z", str(PARCEL_MIN_ZOOM), "-z", str(PARCEL_MAX_ZOOM),
             "--drop-densest-as-needed",
             f"/geojsonl/{parcels_path.name}",
         ])
+        mbtiles_to_pmtiles("parcels.mbtiles", "parcels.pmtiles")
         out_path = TILES_DIR / "parcels.pmtiles"
         size_mb = out_path.stat().st_size / (1024 * 1024)
         print(f"  Wrote {out_path} ({size_mb:.1f} MB)")

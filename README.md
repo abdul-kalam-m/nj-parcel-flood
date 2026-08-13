@@ -28,9 +28,14 @@ by count and assessed value).
 
 ## Status
 
-`09_validate.py` (§12.1 QA gates) run for real, statewide — **6 of 7 gates
-PASS**. The one FAIL is the already-known, owner-approved join-rate
-limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate),
-formally confirmed rather than newly found. See `PROGRESS.md` and
-`VALIDATION_REPORT.md`. Guide-Phase 7 (web app) is still undone; R2 upload
-also not yet done (needs a credentials/infra decision).
+Guide-Phase 7 (web app) built: search & map, jurisdiction summary, district
+exposure, ranked municipalities, global filters, CSV export. Found and fixed
+a major bug along the way — tippecanoe had never actually been writing valid
+PMTiles for either tileset since guide-Phase 6, silently producing mislabeled
+MBTiles instead; both tilesets are now genuinely valid PMTiles. `09_validate.
+py` (§12.1 QA gates) separately run for real, statewide — **6 of 7 gates
+PASS**, the one FAIL being the already-known, owner-approved join-rate
+limitation carried from Phase 1 (88.34%, below the guide's ≥97% gate). See
+`PROGRESS.md` for full detail, including one live-verification gap this
+session's preview tooling didn't cooperate with. R2 upload not yet done
+(needs a credentials/infra decision).

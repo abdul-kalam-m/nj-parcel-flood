@@ -5,6 +5,162 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Guide-Phase 7 (§7.2): web app (agent: sonnet-5)
+
+The app itself: Vite + React 18 + TS strict + Tailwind v4 + MapLibre GL +
+`pmtiles` protocol, exactly the locked stack (§6.2). All 4 views, global
+filters, CSV export. One major, retroactive bug found and fixed along the
+way (below) that also corrects Phase 6's own record.
+
+**Done:**
+- Scaffolded `web/` (`npm create vite -- --template react-ts`), Tailwind v4
+  via `@tailwindcss/vite`, MapLibre GL + `pmtiles`, `react-router-dom` for
+  the 4 views. Dev-mode data loading: a small Vite plugin
+  (`serveArtifacts`) serves the repo's `artifacts/` directory at `/data/*`
+  with proper HTTP Range support (PMTiles reads byte ranges out of a
+  multi-hundred-MB archive, not the whole file -- this isn't optional).
+  Production build reads `VITE_DATA_BASE_URL` (the eventual R2 URL)
+  instead; the view code is source-agnostic either way.
+- Added `artifacts/geography_index.json` (21 counties, 564 munis, names +
+  codes) for the county/muni filter dropdowns -- generated from
+  `pipeline/07_tiles.py`'s own already-tested `build_mun_lookup()` rather
+  than hand-transcribing NJ's municipality names a second time. Added
+  `artifacts/meta.json` (per-source retrieval dates from `data/MANIFEST.
+  json`) so CSV exports carry real vintages (§7.2/§6.4), not a broken
+  pointer to a file the web app was never going to be able to fetch.
+- **Search & Map**: county→muni filters, address/PIN/block-lot search
+  scoped to the selected muni (§7.1's own "lazy-loaded per selected muni"
+  design, followed as specified -- live P8 geocoding is a separate,
+  not-yet-wired path, noted below), MapLibre map with a choropleth below
+  z13 and individual parcels at z13+, parcel detail panel. Re-tiled
+  `parcels.pmtiles` mid-build with a richer attribute set (score, C_cur/
+  C_fut/C_loss, sfha_pct/mod_risk_pct/fut_pct, address, block/lot/qual,
+  assessed value, county/muni) once it became clear the original minimal
+  attrs (pin/band/class_group/flags) couldn't support a real detail panel
+  without a second parquet fetch per click -- and §7.2 wants the base map
+  to work without depending on a WASM parquet reader (DuckDB-WASM is the
+  explicit §7.4 *stretch* explorer, not the base experience).
+- **Jurisdiction Summary**, **District Exposure**, **Ranked
+  Municipalities**: built against the real summary JSON schemas (verified
+  from actual files under `artifacts/summaries/`, not guessed from prose).
+  District Exposure's "stacked current-vs-future" is rendered as grouped
+  (side-by-side) bars, not literally stacked/summed -- a parcel can be
+  both current- and future-at-risk, so summing would double-count; noted
+  in the UI copy itself, not just here.
+- Global filters (county, muni, class group, band, lens, min overlap %,
+  min assessed value) wired into all 4 views and into the MapLibre layer
+  filter expression for the parcel layer.
+- CSV export with disclaimer header (§5.7, verbatim) + real per-source
+  vintages (from `meta.json`) on all 3 table views.
+- WCAG 2.2 AA pass (not a full automated audit -- see Deviations):
+  colorblind-safe band ramp (ColorBrewer YlOrRd, deliberately not
+  red-green), **contrast ratios computed, not eyeballed** -- the first-pass
+  band text colors failed at the sizes actually used (`moderate` 4.04:1,
+  `high` 3.92:1, both under the 4.5:1 normal-text threshold; only
+  qualified at the looser 3:1 large-text/UI bound), fixed with black text
+  on both, verified 9.05:1 and 5.35:1. Skip-to-content link, visible focus
+  rings, semantic landmarks/headings, labeled form controls throughout.
+  Checked "mobile-usable" structurally (375px viewport, zero horizontal
+  overflow) since the live visual screenshot tool wasn't cooperating at
+  that point in the session (see Deviations).
+- `npm run build` (`tsc -b && vite build`) actually run, not assumed --
+  caught two real type errors `tsc --noEmit` alone had missed (project-
+  build mode is stricter): a MapLibre layer-click handler typed as the
+  base `MapMouseEvent` instead of `MapLayerMouseEvent` (the one that
+  actually carries `.features`), and a class-group union comparison
+  TypeScript flagged as vacuous. Both fixed properly, not suppressed;
+  clean production build confirmed after.
+
+**The major finding -- tippecanoe was never actually writing PMTiles:**
+Building the map surfaced that `klokantech/tippecanoe`'s binary has no real
+PMTiles output support at all -- `tippecanoe --help` only documents
+`--output=x.mbtiles`. Handing it a `.pmtiles` filename doesn't error, it
+silently writes MBTiles (SQLite) content to that path regardless of the
+extension. Confirmed directly: the file's own first bytes read `SQLite
+format 3`, not PMTiles' `PMTi` magic, for *both* tilesets guide-Phase 6
+had reported as complete. File-size and row-count checks (what guide-Phase
+6 actually verified) can't catch a wrong internal format -- this was only
+caught now because the web app finally tried to *read* one with a real
+PMTiles client. Fixed in `pipeline/07_tiles.py`: tippecanoe now outputs
+real `.mbtiles`, then `protomaps/go-pmtiles convert` (the format's own
+canonical converter, also via Docker) produces the genuine `.pmtiles`;
+the mbtiles intermediate is discarded. Verified on both tilesets: magic
+bytes now read `PMTi`, `go-pmtiles convert` reported real tile counts (684
+for boundaries, 123,448 for parcels) with no errors. Re-tiled both
+statewide with the fix (`boundaries.pmtiles` 1.8MB, `parcels.pmtiles`
+762.7MB -- both still comfortably under the §7.1 4GB budget, smaller than
+their mbtiles intermediates too).
+
+**Decisions (§13.2):**
+- District Exposure's current-vs-future bars are grouped, not literally
+  stacked -- see Done above; logged since it's a rendering-choice
+  interpretation of §7.2's wording, not a literal implementation of it.
+- `parcels.pmtiles`' attribute schema was widened well beyond the
+  original "minimal attrs" framing (§7.1) specifically so the detail panel
+  works without a second fetch per click. Logged since §7.1 explicitly
+  says "minimal" -- the widened schema (762.7MB) is still ~5x under
+  budget, and the alternative (WASM parquet reads for the base experience)
+  contradicts §7.2's own graceful-degradation requirement more directly
+  than a larger tileset does.
+
+**⚠ Deviations / open items:**
+- **Live browser re-verification of the parcel-tile click → detail panel
+  interaction hit a tooling wall this session, not a code defect --
+  documented precisely rather than either claiming it works or hiding the
+  gap.** Independently verified via direct binary inspection and the
+  `go-pmtiles convert` tool's own output that the fix is correct (see
+  above). But re-testing the *live* interaction after the file swap
+  repeatedly showed MapLibre's `load` event never firing -- traced this
+  all the way down: ruled out my own code (bypassed it entirely, same
+  symptom on a bare hand-built MapLibre instance), ruled out network
+  reachability (every single resource the style needs -- style JSON,
+  sprite, glyphs, tile source -- fetched in single-digit milliseconds via
+  a plain `fetch()`), ruled out Web Workers generally (a bare postMessage
+  round-trip worked fine) and Service Workers (none registered). What's
+  left, and what matches every symptom (network-independent operations
+  fine, anything render-loop-dependent never completing, no thrown error
+  either way): the screenshot tool's own error message throughout this
+  investigation was **"the Browser pane is not displayed, so the page is
+  not compositing frames"** -- MapLibre's WebGL render/load pipeline
+  plausibly gates on `requestAnimationFrame`, which browsers throttle or
+  suspend for a non-composited surface, while plain fetch/Worker calls are
+  unaffected. This is a preview-tooling/session state issue, not
+  something fixable from the code side. What *was* verified live and
+  working, extensively, before and independent of this: the choropleth
+  (both county and muni layers, real data, sensible geographic pattern),
+  all three data views with real numbers cross-checked against earlier
+  session findings (Ocean County 421,551 parcels exact match; ranked munis
+  correctly topped by the actual LBI/barrier-island chain), muni-scoped
+  search returning real addresses, CSV export triggering a real
+  `meta.json` fetch with no errors, and filter-state persistence across
+  view navigation.
+- Live P8 address geocoding (free-text address → point, via NJ's
+  geocoder REST service) is not wired up. Search currently covers PIN/
+  block-lot/address-substring via the local shard only (§7.1's own design
+  for that path), which is genuinely useful on its own, but the "address
+  via P8 geocode" half of §7.2's search bar description is not built.
+- No automated WCAG audit (axe-core) or Playwright suite (§12.2: "Axe:
+  zero serious violations"; "Playwright: search by PIN → panel; county→
+  muni filter cascades; district chart matches summary JSON; export
+  downloads with disclaimer") -- the manual/structural checks in Done
+  above are real but not a substitute for the automated suite §12.2 asks
+  for. Not attempted this session given time already spent on the
+  tiling-format investigation above.
+- R2 upload still not done (needs a credentials/infra decision, flagged
+  since guide-Phase 6).
+- DuckDB-WASM in-browser explorer (§7.4) is an explicit stretch goal, not
+  attempted -- consistent with scope, not a gap.
+- The Phase 1 join-rate limitation (88.34% vs required ≥97%) continues to
+  be carried forward, unrelated to this phase's work.
+
+**Next:** finish live-verifying the parcel click/detail-panel interaction
+once the preview tooling cooperates; wire up P8 live geocoding; the
+automated axe/Playwright suite (§12.2); R2 upload + credentials decision;
+then the rest of guide-Phase 8 (README, portfolio assets) that
+`09_validate.py` alone (2026-08-13, above) didn't cover.
+
+---
+
 ## 2026-08-13 — Guide-Phase 8 (§11): final QA gates, `09_validate.py` (agent: sonnet-5)
 
 Owner asked specifically for `09_validate.py`, not the full guide-Phase 8

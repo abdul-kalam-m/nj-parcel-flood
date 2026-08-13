@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+/* Risk-band colors live in src/lib/bands.ts, not here -- MapLibre paint
+   expressions can't parse CSS custom properties (confirmed live: a `var()`
+   value throws "Could not parse color"), so JS hex literals are the single
+   source of truth for both the map and the DOM, not this file. */
+
+:root {
+  color-scheme: light dark;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Visible keyboard-focus ring everywhere -- WCAG 2.2 AA needs a real focus
+   indicator, not just the (often invisible) browser default. */
+:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
