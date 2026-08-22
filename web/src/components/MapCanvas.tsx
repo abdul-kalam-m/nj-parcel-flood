@@ -60,10 +60,9 @@ export interface MapCanvasProps {
   // out can't cross back past it into a lower tier; scrolling in stays
   // unrestricted.
   zoomTo?: { zoom: number; minZoom: number } | null
-  onZoomChange?: (zoom: number) => void
 }
 
-export function MapCanvas({ onParcelClick, flyTo, zoomTo, onZoomChange }: MapCanvasProps) {
+export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const { filters } = useFilters()
@@ -160,8 +159,14 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo, onZoomChange }: MapCan
       })
       map.on('mouseout', () => tooltip.remove())
 
-      onZoomChange?.(map.getZoom())
-      map.on('zoomend', () => onZoomChange?.(map.getZoom()))
+      // Test-observability only, not read by any app code: the detail-level
+      // toggle deliberately doesn't react to live zoom (it's a sticky
+      // "last explicit choice" indicator, not a status readout -- see
+      // SearchMapView.tsx), so e2e tests need some other way to confirm
+      // the zoom-floor enforcement itself still works.
+      const reportZoom = () => containerRef.current?.setAttribute('data-zoom', String(map.getZoom()))
+      reportZoom()
+      map.on('zoomend', reportZoom)
     })
 
     return () => {

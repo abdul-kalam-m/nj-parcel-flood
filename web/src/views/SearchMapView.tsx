@@ -25,17 +25,18 @@ const LEVEL_LABELS: Record<MapLevel, string> = { county: 'County', municipality:
 // parcel to see its surrounding municipality is a completely reasonable
 // thing to want without having to click back to a different tier button.
 const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 9 }
-function levelForZoom(zoom: number): MapLevel {
-  if (zoom < 9) return 'county'
-  if (zoom < 13) return 'municipality'
-  return 'parcel'
-}
 
 export function SearchMapView() {
   const [selected, setSelected] = useState<ParcelTileProps | null>(null)
   const [flyTo, setFlyTo] = useState<{ lon: number; lat: number; zoom?: number } | null>(null)
   const [zoomTo, setZoomTo] = useState<{ zoom: number; minZoom: number } | null>(null)
-  const [zoom, setZoom] = useState(7.2)
+  // Sticky: only changes on an explicit click, matching the initial zoom
+  // (7.2, county range) at mount. Deliberately does *not* track live zoom
+  // (it used to, via MapCanvas's onZoomChange) -- owner feedback: after
+  // clicking Parcel, scrolling out into muni-range territory flipped the
+  // toggle to "Municipality", which read as the map undoing the user's own
+  // choice rather than just showing what's currently in view.
+  const [selectedLevel, setSelectedLevel] = useState<MapLevel>('county')
 
   return (
     <section>
@@ -52,11 +53,14 @@ export function SearchMapView() {
           {/* Docked onto the map itself, like MapLibre's own zoom control --
               reads as a map control, not a caption sitting next to one. */}
           <div className="relative">
-            <MapCanvas onParcelClick={setSelected} flyTo={flyTo} zoomTo={zoomTo} onZoomChange={setZoom} />
+            <MapCanvas onParcelClick={setSelected} flyTo={flyTo} zoomTo={zoomTo} />
             <div className="absolute left-2 top-2 z-10">
               <MapLevelToggle
-                level={levelForZoom(zoom)}
-                onSelect={(l) => setZoomTo({ zoom: LEVEL_ZOOM[l], minZoom: LEVEL_MIN_ZOOM[l] })}
+                level={selectedLevel}
+                onSelect={(l) => {
+                  setSelectedLevel(l)
+                  setZoomTo({ zoom: LEVEL_ZOOM[l], minZoom: LEVEL_MIN_ZOOM[l] })
+                }}
               />
             </div>
           </div>

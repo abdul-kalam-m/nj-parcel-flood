@@ -5,6 +5,56 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Detail-level toggle made sticky (no longer flips on scroll) (agent: sonnet-5)
+
+Owner feedback, direct follow-up to the prior entry's zoom-floor loosening:
+clicking Parcel then scrolling out flipped the toggle to show "Municipality"
+as active once the camera crossed that threshold -- read as the map
+undoing the user's own explicit choice rather than just reflecting what's
+in view. Original design (documented when the toggle first shipped)
+deliberately tracked live zoom via `onZoomChange`/`'zoomend'`; this reverses
+that specific piece of it.
+
+**Done:**
+- `SearchMapView.tsx`: replaced the reactive `levelForZoom(zoom)` (computed
+  fresh every zoom change) with a `selectedLevel` state that only updates
+  on an explicit button click, defaulting to `'county'` to match the map's
+  actual initial zoom (7.2). The toggle now shows "your last explicit
+  choice," not "what tier is technically rendering right now."
+- Removed `onZoomChange` entirely from `MapCanvas.tsx` (prop, destructure,
+  the `zoomend` listener) rather than just leaving it unused -- nothing
+  else in the app consumed it once `SearchMapView` stopped.
+- The zoom-*floor* enforcement itself (`map.setMinZoom()`) is unchanged --
+  only the reactive UI display was removed. But e2e tests need some way to
+  confirm the floor still works now that the toggle no longer visibly
+  changes with it, so `MapCanvas.tsx` gained a `data-zoom` attribute on
+  the map container (test-observability only, not read by any app code,
+  clearly commented as such).
+- Rewrote `map-level-toggle.spec.ts`: the click-driven test gained an
+  explicit "scrolling out doesn't change it" assertion (directly guards
+  the regression this entry fixes); the two floor-enforcement tests now
+  check `data-zoom` instead of a second button's `aria-pressed`, since
+  that's no longer a valid proxy for actual camera zoom.
+- Full suite: 15/15, run twice for stability. Clean rebuild
+  (`rm -rf dist node_modules/.vite`) and redeployed; verified live on the
+  production URL -- click Parcel, scroll out 40 wheel ticks, "Parcel"
+  stays `aria-pressed=true` throughout, zero console errors.
+
+**Decisions (§13.2):** the toggle is now purely click-driven with no
+"catch-up" from organic scrolling in either direction (not just the
+zoom-out case reported) -- a partial fix (e.g., only suppressing the
+zoom-*out* case, still auto-advancing on zoom-*in*) would need tracking
+"was this level reached by click or by scroll" as separate state for a
+distinction the owner never asked for, so the simpler, fully-sticky model
+was chosen instead.
+
+**⚠ Deviations / open items:** none.
+
+**Next:** portfolio assets (screenshots, `CASE_STUDY.md`); optional custom
+domain for the Pages deployment.
+
+---
+
 ## 2026-08-13 — Parcel level's zoom-out floor loosened to match Municipality (agent: sonnet-5)
 
 Owner feedback on the live site (screenshot of a real Ocean County
