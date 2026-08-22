@@ -18,13 +18,18 @@ const LEVEL_LABELS: Record<MapLevel, string> = { county: 'County', municipality:
 // Each level's own lower zoom boundary. Picking a level sets this as the
 // map's floor so scrolling *out* can't cross back into a lower tier;
 // scrolling *in* is never restricted. County has no lower tier to guard
-// against, so 0 (no floor) is correct there. Parcel deliberately shares
-// Municipality's floor (9) rather than using its own render threshold
-// (13, parcels-fill's minzoom) -- owner feedback: locking Parcel's
-// zoom-out at 13 felt too tight, since zooming out from an individual
-// parcel to see its surrounding municipality is a completely reasonable
-// thing to want without having to click back to a different tier button.
-const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 9 }
+// against, so 0 (no floor) is correct there. Parcel's floor is 13, not
+// shared with Municipality's 9 -- tried loosening it to 9 first, but
+// parcels.pmtiles is only ever generated with tile data from z13 up
+// (pipeline/07_tiles.py: `tippecanoe -Z13 -z16`), so below 13 there is no
+// parcel geometry in the file at all, full stop -- not a rendering
+// setting, a fact about what's actually in the tileset. A wider floor let
+// the toggle stay pinned on "Parcel" while the map itself fell back to
+// showing the municipality choropleth underneath, which read as broken
+// (button says Parcel, map shows munis) more than it read as useful.
+// Owner chose consistency over more zoom-out room: selecting Parcel now
+// always means real parcel geometry is what's on screen.
+const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 13 }
 
 export function SearchMapView() {
   const [selected, setSelected] = useState<ParcelTileProps | null>(null)

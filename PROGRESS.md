@@ -5,6 +5,72 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Parcel's zoom-out floor reverted to 13: content, not just the button, must match "Parcel" (agent: sonnet-5)
+
+Owner, from the prior entry's own screenshot: the "Parcel" button stayed
+selected (that fix worked), but the map underneath it had fallen back to
+the municipality choropleth -- pointed out that a button correctly reading
+"Parcel" while the map shows municipality content is still broken, just
+differently.
+
+Checked the real constraint before touching anything (§13.2 -- verify,
+don't guess): `pipeline/07_tiles.py` generates `parcels.pmtiles` with
+`tippecanoe -Z13 -z16`. There is no parcel geometry in the tileset below
+zoom 13 at all -- not a MapLibre config choice, a fact about what tippecanoe
+was told to produce. Loosening Parcel's floor to 9 (two entries back) let
+you scroll into a zoom range where the file has nothing to show for the
+parcels layer, so the map correctly fell back to whatever *does* render
+there (munis). Two ways to actually fix this: revert the floor (quick,
+no pipeline work, less zoom-out room) or regenerate the tileset with a
+lower minzoom (real Docker/tippecanoe re-run over 3.4M statewide parcels,
+larger file, re-upload to R2, genuine uncertainty whether millions of
+simplified parcel outlines read as useful or as clutter at a zoomed-out
+view -- probably why 13 was chosen the first time). Owner chose the
+former: consistency over more room.
+
+**Done:**
+- `SearchMapView.tsx`: `LEVEL_MIN_ZOOM.parcel` back to 13 (was 9, was
+  originally 13 before that loosening two entries ago). County (0) and
+  Municipality (9) unchanged.
+- `MapCanvas.tsx` gained a `data-min-zoom` attribute alongside the
+  existing `data-zoom` (both now updated on every `'zoom'` tick, not just
+  `'zoomend'`, after `'zoomend'`-only reporting read as "frozen" to a test
+  polling mid-gesture) -- test-observability only, used to directly
+  confirm the floor value itself during debugging, not just infer it from
+  where zoom stopped.
+- Updated `map-level-toggle.spec.ts`'s Parcel-floor test to assert the
+  restored 13, not 9.
+- **A genuine false alarm during verification, run down rather than
+  accepted at face value**: the first live-production check after this
+  redeploy showed zoom dropping to 9 anyway, seemingly contradicting the
+  fix. Reproduced the exact search-then-click-Parcel-then-scroll sequence
+  locally instead of trusting the production result -- worked correctly
+  there (clamped at exactly 13). Re-tested production ~20s later: also
+  correct. Root cause: tested production within seconds of the deploy
+  completing, before Cloudflare's edge cache had propagated the new build
+  everywhere -- the third time this general class of "looks broken right
+  after deploy" has turned out to be propagation lag, not code, in this
+  project. Building in a short wait before the *first* post-deploy check
+  from now on, rather than re-diagnosing this from scratch again.
+- Full suite: 15/15, twice. Clean rebuild, redeployed, verified live
+  (with the propagation-lag lesson applied this time): search a real
+  parcel, click Parcel, scroll out 40 wheel ticks -- map keeps showing
+  the individual parcel (hover tooltip, real PIN/address/score all still
+  correct), zoom floor holds at exactly 13, zero console errors.
+
+**Decisions (§13.2):** none new -- straight owner-directed choice between
+two already-scoped options, not a new judgment call.
+
+**⚠ Deviations / open items:** regenerating the tileset with a lower
+minzoom (the other option offered) remains genuinely open if the owner
+ever wants more zoom-out room at parcel scale later -- not started, real
+scope (pipeline re-run + re-upload), not attempted speculatively.
+
+**Next:** portfolio assets (screenshots, `CASE_STUDY.md`); optional custom
+domain for the Pages deployment.
+
+---
+
 ## 2026-08-13 — Detail-level toggle made sticky (no longer flips on scroll) (agent: sonnet-5)
 
 Owner feedback, direct follow-up to the prior entry's zoom-floor loosening:

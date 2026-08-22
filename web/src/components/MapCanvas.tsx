@@ -163,10 +163,17 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
       // toggle deliberately doesn't react to live zoom (it's a sticky
       // "last explicit choice" indicator, not a status readout -- see
       // SearchMapView.tsx), so e2e tests need some other way to confirm
-      // the zoom-floor enforcement itself still works.
-      const reportZoom = () => containerRef.current?.setAttribute('data-zoom', String(map.getZoom()))
+      // the zoom-floor enforcement itself still works. Reported on every
+      // 'zoom' tick, not just 'zoomend' -- 'zoomend' only fires once a
+      // gesture fully settles, which reads as "stuck" to a test polling
+      // mid-scroll.
+      const reportZoom = () => {
+        if (!containerRef.current) return
+        containerRef.current.setAttribute('data-zoom', String(map.getZoom()))
+        containerRef.current.setAttribute('data-min-zoom', String(map.getMinZoom()))
+      }
       reportZoom()
-      map.on('zoomend', reportZoom)
+      map.on('zoom', reportZoom)
     })
 
     return () => {

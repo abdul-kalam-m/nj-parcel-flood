@@ -78,7 +78,7 @@ test('picking Municipality blocks scrolling out below its own floor, but scrolli
   }).toPass()
 })
 
-test('picking Parcel blocks scrolling out below its own floor (shared with Municipality)', async ({ page }) => {
+test('picking Parcel blocks scrolling out below its own render threshold (13), not shared with Municipality', async ({ page }) => {
   await page.goto('/')
   const group = page.getByRole('group', { name: 'Map detail level' })
   const parcel = group.getByRole('button', { name: 'Parcel' })
@@ -86,19 +86,16 @@ test('picking Parcel blocks scrolling out below its own floor (shared with Munic
   await parcel.click()
   await expect(parcel).toHaveAttribute('aria-pressed', 'true')
 
-  // Parcel shares Municipality's floor (9), not its own render threshold
-  // (13, parcels-fill's minzoom) -- owner feedback: locking zoom-out at 13
-  // felt too tight, since zooming out from one parcel to see its
-  // surrounding municipality is a reasonable thing to want.
-  await scrollMap(page, 100) // moderate scroll -- crosses below 13, must not be blocked yet
+  // Parcel's floor is 13, *not* Municipality's 9 -- parcels.pmtiles only
+  // ever contains tile data from z13 up (pipeline/07_tiles.py: tippecanoe
+  // -Z13 -z16), so there's no parcel geometry to show below that zoom at
+  // all. A wider floor was tried first, but it let the toggle stay pinned
+  // on "Parcel" while the map fell back to showing the municipality
+  // choropleth underneath -- inconsistent with the button's own label, so
+  // reverted. A wide scroll here would clearly cross well below 13 if
+  // unrestricted.
+  await scrollMap(page, 100, 30)
   await expect(async () => {
-    const z = await currentZoom(page)
-    expect(z).toBeLessThan(13)
-    expect(z).toBeGreaterThanOrEqual(9)
-  }).toPass()
-
-  await scrollMap(page, 100, 30) // wide margin -- would clearly cross below 9 unrestricted
-  await expect(async () => {
-    expect(await currentZoom(page)).toBeGreaterThanOrEqual(9)
+    expect(await currentZoom(page)).toBeGreaterThanOrEqual(13)
   }).toPass()
 })
