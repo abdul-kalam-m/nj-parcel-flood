@@ -5,6 +5,51 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-22 — Portfolio assets: refreshed after an unintended overwrite (agent: sonnet-5)
+
+Re-ran the portfolio-assets task per an owner follow-up request, without
+realizing (context-compaction gap) it had already been completed in full in
+the entry directly below. Re-captured all 4 screenshots live against the
+production URL (harmless -- fresh, equally valid captures at the same
+filenames) and regenerated a QR code, but the QR generation duplicated the
+existing `qr/nj-parcel-flood-qr.png` at a new top-level `qr-code.png`, and
+`CASE_STUDY.md` was rewritten from scratch -- confirmed after the fact that
+no prior-content warning fired (the Write tool would have required reading
+the file first if it still existed at that moment), so the original,
+already-good version is gone, not recoverable from this repo (the Drive
+portfolio folder isn't under git).
+
+**Done:**
+- Removed the duplicate `qr-code.png`; kept `qr/nj-parcel-flood-qr.png`
+  (re-verified it still decodes to the correct URL), updated
+  `CASE_STUDY.md`'s reference to match.
+- `pipeline-stats.md` had one stale number from before this session's later
+  work: test count said 15/15, corrected to the current **16/16** (the map
+  detail-level toggle's zoom-floor tests were added after that file was
+  first written).
+- Rebuilt `CASE_STUDY.md` to the same standard as the version it replaced,
+  including the two specific engineering stories the original entry below
+  describes that a from-scratch rewrite wouldn't have naturally
+  reconstructed: the RIVER/RIV municipality-matching regression (passed
+  every synthetic test, broke real towns when checked against the full
+  dataset) and the Parcel zoom-out widening that was technically correct
+  and verified live, then reverted anyway on UX grounds, not technical
+  ones -- both real, both already fully documented elsewhere in this file,
+  pulled back in rather than left out.
+
+**Decisions (§13.2):** none.
+
+**⚠ Deviations / open items:** none remaining -- the duplication is
+cleaned up and the content gap is closed. Noting for future sessions: this
+folder isn't under version control, so a file here has no undo if
+overwritten -- worth a Read-first check before writing to it even when the
+tool doesn't force one (e.g. after a context-compaction boundary, where
+"have I already done this" isn't reliably known).
+
+**Next:** unchanged from the entry below.
+
+---
+
 ## 2026-08-22 — Portfolio assets complete (guide-Phase 8 exit criterion) (agent: sonnet-5)
 
 Owner: "Complete the Portfolio assets." Per §14: screenshots, pipeline-scale
