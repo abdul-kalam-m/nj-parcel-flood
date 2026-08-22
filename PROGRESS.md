@@ -5,6 +5,61 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-22 — Parcel zoom-out widening reverted; clarified the app has no raw flood-zone layer (agent: sonnet-5)
+
+Owner, same day as the entry below: (1) revert the Parcel zoom-out
+widening; (2) "I don't see the flood layers, why?"
+
+**Done:**
+- Reverted `web/src/components/MapCanvas.tsx`, `web/src/views/
+  SearchMapView.tsx`, `web/e2e/map-level-toggle.spec.ts` to their exact
+  state as of `f7e47ef` (`git checkout f7e47ef -- <files>`) -- Parcel's
+  floor back to 13, the sticky-button behavior and the simple static
+  `minzoom: 13` layer definitions from before the widening, no
+  visibility-toggle complexity. Confirmed a clean, exact revert: the
+  rebuilt production bundle uploaded 0 new files to Pages (byte-identical
+  to what was already deployed there from that same commit). Suite back to
+  15/15 (the Municipality-choropleth regression-guard test from the
+  widening no longer applies once the toggle complexity is gone, so it's
+  gone too, not left as dead weight). Verified live: Parcel click ->
+  `data-min-zoom=13` on the production URL, zero console errors.
+- **Did not regenerate `parcels.pmtiles` back down to z13.** The deployed
+  file is a strict superset (z9-16 physically contains everything a z13-16
+  file would) and the reverted frontend never requests below z13 in
+  practice, so the extra z9-12 tiles just sit unused in R2 -- harmless, and
+  re-narrowing would cost a full statewide tippecanoe run for zero
+  behavioral difference. `pipeline/07_tiles.py`'s docstring updated to
+  document this mismatch explicitly (constant still 9, app still only
+  requests 13+) rather than leave a future reader to notice the
+  discrepancy on their own.
+- **"Why don't I see the flood layers?"** -- checked, not guessed: grepped
+  the entire web app for `flood`/`NFHL`/`SFHA` and confirmed
+  `MapCanvas.tsx` has never rendered raw FEMA/NJDEP flood-hazard-zone
+  geometry as its own map layer, at any point this project has existed.
+  The three layers it has (counties, municipalities, parcels) are all
+  colored by *computed risk* (score, band, % at risk) derived from SFHA/
+  future-layer overlap -- `sfha_pct` only ever appears as a filter
+  threshold (`Min overlap %`), never as its own rendered shape. This isn't
+  a regression from the widening or anything else recent -- it's how the
+  map has worked since guide-Phase 7 shipped. If the owner wants the raw
+  FEMA SFHA polygons (and/or the NJDEP future layer) visible as their own
+  overlay, distinct from the risk-derived coloring, that's a real, new
+  feature -- a new tileset from P3/P4's own geometry, not something
+  achievable by changing app code alone -- flagged, not started
+  unprompted.
+
+**Decisions (§13.2):** none.
+
+**⚠ Deviations / open items:** none -- the widened-but-unused z9-12 tile
+data sitting in R2 is a deliberate, documented choice (see above), not an
+oversight.
+
+**Next:** decide whether a raw flood-zone overlay layer (§4 P3/P4) is
+wanted as a real feature; portfolio assets (screenshots, `CASE_STUDY.md`);
+optional custom domain for the Pages deployment.
+
+---
+
 ## 2026-08-22 — Parcel zoom-out fix, full scope: parcels.pmtiles widened to z9, real per-tier layer visibility (agent: sonnet-5)
 
 Continues the entry below. Owner's own screenshot caught the same bug that

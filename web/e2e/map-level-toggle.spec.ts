@@ -59,21 +59,6 @@ async function currentZoom(page: import('@playwright/test').Page): Promise<numbe
   return Number(attr)
 }
 
-async function parcelsVisible(page: import('@playwright/test').Page): Promise<boolean> {
-  const mapRegion = page.getByRole('application', { name: 'Statewide flood risk map' })
-  return (await mapRegion.getAttribute('data-parcels-visible')) === 'true'
-}
-
-// Stronger than parcelsVisible: that only reflects MapCanvas.tsx's own
-// visibility-toggle *intent* (a layout property), which would read true
-// even against a stale tileset that still stopped at its old z13 minzoom --
-// this checks queryRenderedFeatures instead, actual proof real parcel
-// geometry is on screen, not just that the layer isn't hidden.
-async function parcelsHaveData(page: import('@playwright/test').Page): Promise<boolean> {
-  const mapRegion = page.getByRole('application', { name: 'Statewide flood risk map' })
-  return (await mapRegion.getAttribute('data-parcels-have-data')) === 'true'
-}
-
 test('picking Municipality blocks scrolling out below its own floor, but scrolling in still works', async ({ page }) => {
   await page.goto('/')
   const group = page.getByRole('group', { name: 'Map detail level' })
@@ -93,51 +78,24 @@ test('picking Municipality blocks scrolling out below its own floor, but scrolli
   }).toPass()
 })
 
-test('picking Parcel blocks scrolling out below its own floor (9, shared with Municipality), and keeps showing real parcels the whole way down', async ({ page }) => {
+test('picking Parcel blocks scrolling out below its own render threshold (13), not shared with Municipality', async ({ page }) => {
   await page.goto('/')
   const group = page.getByRole('group', { name: 'Map detail level' })
   const parcel = group.getByRole('button', { name: 'Parcel' })
 
   await parcel.click()
   await expect(parcel).toHaveAttribute('aria-pressed', 'true')
-  await expect(async () => {
-    expect(await parcelsVisible(page)).toBe(true)
-  }).toPass()
 
-  // Parcel's floor is 9 now, same as Municipality's -- parcels.pmtiles was
-  // widened from its original z13-only range down to z9 specifically so
-  // this could be a real floor and not just a button-label mismatch (see
-  // the other Parcel test below, and PROGRESS.md 2026-08-13 "Parcel
-  // zoom-out fix, full scope"). A wide scroll here would clearly cross
-  // well below 9 if unrestricted.
+  // Parcel's floor is 13, *not* Municipality's 9 -- parcels.pmtiles only
+  // ever contains tile data from z13 up (pipeline/07_tiles.py: tippecanoe
+  // -Z13 -z16), so there's no parcel geometry to show below that zoom at
+  // all. A wider floor was tried first, but it let the toggle stay pinned
+  // on "Parcel" while the map fell back to showing the municipality
+  // choropleth underneath -- inconsistent with the button's own label, so
+  // reverted. A wide scroll here would clearly cross well below 13 if
+  // unrestricted.
   await scrollMap(page, 100, 30)
   await expect(async () => {
-    expect(await currentZoom(page)).toBeGreaterThanOrEqual(9)
-  }).toPass()
-  // The whole point of widening the tileset rather than just the floor:
-  // real parcel geometry, not the municipality choropleth (and not a blank
-  // layer from a tileset that only *claims* to cover z9 but doesn't), is
-  // what's actually on screen all the way down to that floor.
-  expect(await parcelsVisible(page)).toBe(true)
-  await expect(async () => {
-    expect(await parcelsHaveData(page)).toBe(true)
-  }).toPass()
-})
-
-test('Municipality mode still shows the municipality choropleth (not parcels) across 9-13, unaffected by the Parcel-mode widening', async ({ page }) => {
-  await page.goto('/')
-  const group = page.getByRole('group', { name: 'Map detail level' })
-  const muni = group.getByRole('button', { name: 'Municipality' })
-
-  await muni.click()
-  await expect(muni).toHaveAttribute('aria-pressed', 'true')
-  // Regression guard: parcels-fill is now zoom-eligible across the same
-  // 9-13 band munis-fill uses, purely by minzoom/maxzoom -- without the
-  // explicit visibility toggle in MapCanvas.tsx's updateTierVisibility,
-  // parcels would silently cover the municipality choropleth for anyone
-  // just scrolling through that range normally, never having touched the
-  // Parcel button at all.
-  await expect(async () => {
-    expect(await parcelsVisible(page)).toBe(false)
+    expect(await currentZoom(page)).toBeGreaterThanOrEqual(13)
   }).toPass()
 })

@@ -5,12 +5,20 @@ Two tilesets:
 - `tiles/parcels.pmtiles` (z9-16, minimal attrs: pin, band, class_group,
   current/future flags -- deliberately NOT the full parcel_scores schema,
   per §7.1's own "minimal attrs" instruction and the ≤4GB budget). Minzoom
-  widened from the original 13 to 9 post-launch (PROGRESS.md 2026-08-13,
-  "Parcel zoom-out fix") so the web app's Parcel detail-level toggle can
-  zoom out to match Municipality's own floor while still showing real
-  parcel geometry, not switching to the municipality choropleth underneath
-  it -- `--drop-densest-as-needed` (already in use below) handles the
-  much larger per-tile feature counts at the wider zoom range.
+  widened from the original 13 to 9 (PROGRESS.md 2026-08-13/22, "Parcel
+  zoom-out fix, full scope") to let the web app's Parcel detail-level
+  toggle zoom out to Municipality's own floor while still showing real
+  parcel geometry -- `--drop-densest-as-needed` (already in use below)
+  handles the much larger per-tile feature counts at the wider range.
+  **The deployed tileset still covers z9-16 as of this writing, but the
+  web app itself was reverted back to only ever requesting z13+ (owner
+  feedback the same day: the widened Parcel view, real parcel data or
+  not, didn't read as showing "the flood layers" the way the continuous
+  municipality choropleth does -- see PROGRESS.md 2026-08-22 "Parcel
+  zoom-out fix reverted"). This constant is left at 9 rather than
+  regenerating the tileset back down to 13 -- the wider file is a strict
+  superset, harmless to leave deployed unused, and re-narrowing it would
+  cost a full statewide tippecanoe run for no behavioral difference.
 - `tiles/boundaries.pmtiles` (counties + municipalities, two named layers in
   one tileset, summary attrs from Phase 5's aggregates, for choropleths at
   z<13).

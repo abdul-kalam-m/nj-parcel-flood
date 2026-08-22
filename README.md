@@ -43,7 +43,7 @@ Phase 1 (88.34%, below the guide's ≥97% gate).
 An axe/Playwright suite (§12.2 — PIN search → panel, filter cascades,
 district chart vs. summary JSON, export + disclaimer, axe scans across all
 5 views, plus checks for the toggle's zoom-jump *and* its zoom-floor
-locking, and the map tooltip) is implemented and **passing 16/16**, run
+locking, and the map tooltip) is implemented and **passing 15/15**, run
 repeatedly for stability. Running it for real has repeatedly surfaced and
 fixed genuine bugs, not just test-authoring issues — a real accessible-name
 defect in the filter bar, a serious axe/WCAG 4.1.2 violation, a duplicated
@@ -75,20 +75,18 @@ API, not a console error). Both root-caused and confirmed fixed against
 the real live URL — actual tile traffic, full search → parcel-panel flow,
 all 5 routes.
 
-**The Parcel detail-level toggle's zoom-out floor now genuinely matches
-Municipality's (9), not just the button.** Widening it turned out to need
-`parcels.pmtiles` itself widened from z13 to z9 (owner: "full scope" once a
-cheaper fix — loosening the floor alone — turned out to leave the map
-showing the municipality choropleth while the button still said "Parcel").
-`MapCanvas.tsx` now explicitly switches which layer is visible per selected
-tier, so the existing municipality choropleth isn't regressed for anyone
-who never touches the Parcel button. Regenerating the statewide tileset
-(3.4M parcels) surfaced two real local-environment blockers, both solved
-without touching any security setting: Docker Desktop's WSL2 backend
-needed a clean restart, and a Windows Application Control policy was
-blocking Python's GDAL bindings natively — worked around by running just
-that pipeline step under WSL Ubuntu instead. Verified live on the
-production URL: real parcel geometry renders all the way to the shared
-floor, the municipality choropleth is unaffected in its own mode. See
-`PROGRESS.md` (2026-08-22, "Parcel zoom-out fix, full scope") for full
-detail.
+**The Parcel detail-level toggle's zoom-out floor is back to 13.** It was
+briefly widened to 9 (matching Municipality's own floor) by widening
+`parcels.pmtiles` itself from z13 to z9 — a real, working fix, verified
+live with real parcel geometry rendering all the way down — but reverted
+the same day on owner feedback: the widened view, real data or not, didn't
+read as showing "the flood layers" the way the continuous municipality
+choropleth does. The wider tileset is left deployed in R2 (a harmless
+superset, not worth a full statewide tippecanoe re-run to narrow back
+down); the app itself was reverted to its exact prior state. Separately,
+confirmed by grep (not assumed): **the app has never rendered raw FEMA/
+NJDEP flood-hazard-zone geometry as its own map layer** — only computed
+risk (score, band, % at risk) derived from it. A raw SFHA/future-layer
+overlay, if wanted, would be a genuinely new feature (a new tileset from
+those sources' own geometry), not a fix. See `PROGRESS.md` (2026-08-22,
+both entries) for full detail.

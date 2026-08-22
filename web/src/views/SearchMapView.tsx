@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MapCanvas, type MapLevel } from '../components/MapCanvas'
+import { MapCanvas } from '../components/MapCanvas'
 import { ParcelDetailPanel } from '../components/ParcelDetailPanel'
 import { MuniSearch } from '../components/MuniSearch'
 import { BAND_COLORS, BAND_LABELS } from '../lib/bands'
@@ -7,27 +7,29 @@ import { BANDS } from '../types'
 import type { ParcelTileProps, SearchRecord } from '../types'
 
 // Mirrors the layer minzoom/maxzoom thresholds in MapCanvas.tsx: counties
-// render up to zoom 13, munis from 9-13 (on top of counties by default),
-// parcels from 9 up when Parcel is the selected tier (13 up otherwise --
-// see MapCanvas.tsx's updateTierVisibility). The toggle jumps to a
-// representative zoom inside each tier rather than re-centering -- there's
-// no per-geography centroid in the current pipeline output to fly to, so
-// this controls zoom only, from wherever the map already is.
+// render up to zoom 13, munis from 9-13 (on top of counties), parcels from
+// 13 up. The toggle jumps to a representative zoom inside each tier rather
+// than re-centering -- there's no per-geography centroid in the current
+// pipeline output to fly to, so this controls zoom only, from wherever the
+// map already is.
+type MapLevel = 'county' | 'municipality' | 'parcel'
 const LEVEL_ZOOM: Record<MapLevel, number> = { county: 7.2, municipality: 10.5, parcel: 14 }
 const LEVEL_LABELS: Record<MapLevel, string> = { county: 'County', municipality: 'Municipality', parcel: 'Parcel' }
 // Each level's own lower zoom boundary. Picking a level sets this as the
 // map's floor so scrolling *out* can't cross back into a lower tier;
 // scrolling *in* is never restricted. County has no lower tier to guard
-// against, so 0 (no floor) is correct there. Parcel now shares
-// Municipality's floor (9), not its own original render threshold (13) --
-// parcels.pmtiles was widened from z13 to z9 specifically for this
-// (pipeline/07_tiles.py, `tippecanoe -Z9 -z16`, PROGRESS.md 2026-08-13
-// "Parcel zoom-out fix, full scope") after an earlier, cheaper attempt at
-// this same request (loosen the floor without touching the tileset) turned
-// out to be a genuine correctness bug, not a style choice: below 13 there
-// was no parcel geometry in the file at all, so the map silently fell back
-// to the municipality choropleth while the button still said "Parcel".
-const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 9 }
+// against, so 0 (no floor) is correct there. Parcel's floor is 13, not
+// shared with Municipality's 9 -- tried loosening it to 9 first, but
+// parcels.pmtiles is only ever generated with tile data from z13 up
+// (pipeline/07_tiles.py: `tippecanoe -Z13 -z16`), so below 13 there is no
+// parcel geometry in the file at all, full stop -- not a rendering
+// setting, a fact about what's actually in the tileset. A wider floor let
+// the toggle stay pinned on "Parcel" while the map itself fell back to
+// showing the municipality choropleth underneath, which read as broken
+// (button says Parcel, map shows munis) more than it read as useful.
+// Owner chose consistency over more zoom-out room: selecting Parcel now
+// always means real parcel geometry is what's on screen.
+const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 13 }
 
 export function SearchMapView() {
   const [selected, setSelected] = useState<ParcelTileProps | null>(null)
@@ -49,15 +51,14 @@ export function SearchMapView() {
       />
       <p className="mb-2 text-xs text-zinc-500">
         County/municipality boundaries are shown below zoom 13, colored by % at risk; individual
-        parcels appear at zoom 13+ (or anywhere once "Parcel" is selected below), colored by risk
-        band. Click a parcel for its detail panel.
+        parcels appear at zoom 13+, colored by risk band. Click a parcel for its detail panel.
       </p>
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="min-w-0 flex-1">
           {/* Docked onto the map itself, like MapLibre's own zoom control --
               reads as a map control, not a caption sitting next to one. */}
           <div className="relative">
-            <MapCanvas onParcelClick={setSelected} flyTo={flyTo} zoomTo={zoomTo} activeLevel={selectedLevel} />
+            <MapCanvas onParcelClick={setSelected} flyTo={flyTo} zoomTo={zoomTo} />
             <div className="absolute left-2 top-2 z-10">
               <MapLevelToggle
                 level={selectedLevel}
