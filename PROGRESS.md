@@ -5,6 +5,56 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-22 — Portfolio assets complete (guide-Phase 8 exit criterion) (agent: sonnet-5)
+
+Owner: "Complete the Portfolio assets." Per §14: screenshots, pipeline-scale
+stats, draft `CASE_STUDY.md`, `/qr/` code for the production URL — saved to
+`8. NJ FLOOD RISK DASHBOARD\case-study-assets\` (the Drive/portfolio
+location, not this repo — matches §8/§14's own "Drive folder = spec + guide
++ case-study assets only" split).
+
+**Done:**
+- 4 screenshots captured live against the production URL (not the dev
+  server, not mocked) via a real Playwright browser: statewide choropleth,
+  parcel detail panel with full score-driver breakdown, district exposure
+  chart, ranked municipalities. First choropleth capture came back
+  uncolored (a 3s post-navigation wait wasn't enough for a cold page load
+  to finish painting the choropleth) -- caught by actually looking at the
+  screenshot rather than assuming success, recaptured at 7s.
+- `pipeline-stats.md`: every number pulled from `PROGRESS.md`'s own dated
+  entries or a live R2 check, not estimated. Caught and corrected two of my
+  own overstatements before finalizing: the Cape May intersection-stage
+  timing outlier (73 min, ~65% of that stage's entire statewide runtime)
+  was drafted first as "explained by geometry density" -- the actual record
+  says that hypothesis was checked and *ruled out*, root cause not fully
+  chased; and the widened-tileset tippecanoe rebuild time was drafted as a
+  specific "~30 min" I hadn't actually timed precisely -- corrected to what
+  was actually observed (still running at 29 min, done sometime before a
+  1-hour ceiling).
+- `qr/nj-parcel-flood-qr.png`: generated locally (`qrcode`, no external
+  API), then round-tripped through a decoder (`pyzbar`) to confirm it
+  actually reads back `https://nj-parcel-flood.pages.dev` before treating
+  it as done, not just that it looked like a QR code.
+- `CASE_STUDY.md`: problem/approach/architecture, real statewide numbers
+  (3,478,722 parcels, 19.31% at risk, 25.86% value exposure, 88.34% join
+  rate stated plainly as the one gate that doesn't pass), and four real
+  engineering stories from this project's own record -- the RIVER/RIV
+  regression caught against the full dataset, the two production-only
+  deploy bugs, the accessible-name defect axe caught, and the zoom-widening
+  feature that was technically correct but got reverted anyway. Chosen
+  deliberately over generic "built X using Y" copy -- the interesting part
+  of this build was what got caught and fixed, not just what shipped.
+
+**Decisions (§13.2):** none.
+
+**⚠ Deviations / open items:** none.
+
+**Next:** decide whether a raw flood-zone overlay layer is wanted as a real
+feature (still open, from the prior entry); optional custom domain for the
+Pages deployment.
+
+---
+
 ## 2026-08-22 — Parcel zoom-out widening reverted; clarified the app has no raw flood-zone layer (agent: sonnet-5)
 
 Owner, same day as the entry below: (1) revert the Parcel zoom-out
