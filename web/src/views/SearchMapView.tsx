@@ -15,13 +15,16 @@ import type { ParcelTileProps, SearchRecord } from '../types'
 type MapLevel = 'county' | 'municipality' | 'parcel'
 const LEVEL_ZOOM: Record<MapLevel, number> = { county: 7.2, municipality: 10.5, parcel: 14 }
 const LEVEL_LABELS: Record<MapLevel, string> = { county: 'County', municipality: 'Municipality', parcel: 'Parcel' }
-// Each level's own lower zoom boundary, same numbers as the minzoom values
-// in MapCanvas.tsx. Picking a level sets this as the map's floor so
-// scrolling *out* can't cross back into a lower tier (e.g. Municipality's
-// 9 -> can't scroll down into county-only territory); scrolling *in* is
-// never restricted. County has no lower tier to guard against, so 0 (no
-// floor) is correct there.
-const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 13 }
+// Each level's own lower zoom boundary. Picking a level sets this as the
+// map's floor so scrolling *out* can't cross back into a lower tier;
+// scrolling *in* is never restricted. County has no lower tier to guard
+// against, so 0 (no floor) is correct there. Parcel deliberately shares
+// Municipality's floor (9) rather than using its own render threshold
+// (13, parcels-fill's minzoom) -- owner feedback: locking Parcel's
+// zoom-out at 13 felt too tight, since zooming out from an individual
+// parcel to see its surrounding municipality is a completely reasonable
+// thing to want without having to click back to a different tier button.
+const LEVEL_MIN_ZOOM: Record<MapLevel, number> = { county: 0, municipality: 9, parcel: 9 }
 function levelForZoom(zoom: number): MapLevel {
   if (zoom < 9) return 'county'
   if (zoom < 13) return 'municipality'

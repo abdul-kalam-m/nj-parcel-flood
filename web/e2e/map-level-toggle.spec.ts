@@ -58,16 +58,25 @@ test('picking Municipality blocks scrolling out to County, but scrolling in stil
   await expect(parcel).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('picking Parcel blocks scrolling out to Municipality', async ({ page }) => {
+test('picking Parcel allows scrolling out into Municipality range, but not past it to County', async ({ page }) => {
   await page.goto('/')
   const group = page.getByRole('group', { name: 'Map detail level' })
+  const county = group.getByRole('button', { name: 'County' })
   const muni = group.getByRole('button', { name: 'Municipality' })
   const parcel = group.getByRole('button', { name: 'Parcel' })
 
   await parcel.click()
   await expect(parcel).toHaveAttribute('aria-pressed', 'true')
 
-  await scrollMap(page, 100)
-  await expect(parcel).toHaveAttribute('aria-pressed', 'true')
-  await expect(muni).toHaveAttribute('aria-pressed', 'false')
+  // Parcel now shares Municipality's floor (9), not its own render
+  // threshold (13) -- owner feedback: locking zoom-out at 13 felt too
+  // tight, since zooming out from one parcel to see its surrounding
+  // municipality is a reasonable thing to want without switching tiers.
+  await scrollMap(page, 100) // moderate scroll -- crosses below 13 into muni range, not past 9
+  await expect(muni).toHaveAttribute('aria-pressed', 'true')
+  await expect(parcel).toHaveAttribute('aria-pressed', 'false')
+
+  await scrollMap(page, 100, 30) // wide margin -- would clearly cross below 9 into county territory unrestricted
+  await expect(muni).toHaveAttribute('aria-pressed', 'true')
+  await expect(county).toHaveAttribute('aria-pressed', 'false')
 })

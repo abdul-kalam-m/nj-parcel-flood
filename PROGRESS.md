@@ -5,6 +5,43 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-13 — Parcel level's zoom-out floor loosened to match Municipality (agent: sonnet-5)
+
+Owner feedback on the live site (screenshot of a real Ocean County
+parcel-level view): Parcel's zoom-out floor (9→13, `parcels-fill`'s own
+render threshold) felt too tight -- wanted to zoom out from an individual
+parcel to see its surrounding municipality without switching tiers first.
+
+**Done:**
+- `SearchMapView.tsx`'s `LEVEL_MIN_ZOOM.parcel` changed 13 → 9, matching
+  Municipality's own floor. County (0) and Municipality (9) unchanged.
+  Scrolling out from Parcel can now reach Municipality range; still
+  correctly blocked from crossing further down into County territory.
+- Updated `map-level-toggle.spec.ts`'s Parcel-floor test to match the new,
+  intended behavior (it previously asserted the *old* restriction as
+  correct, which the fix would otherwise have broken) -- rewrote rather
+  than deleted, still exercises both the "now allowed" and "still blocked"
+  halves of the floor.
+- Full suite re-run: 15/15 (one transient CPU-contention flake on
+  `search-by-pin.spec.ts` under 4-way parallelism, already a known,
+  documented pattern in this file -- passed clean on immediate re-run, not
+  a regression from this change).
+- Rebuilt clean (`rm -rf dist node_modules/.vite`, per the now-established
+  practice from the last deploy's stale-cache scare) and redeployed to
+  Cloudflare Pages. Verified live: scrolling out from Parcel now correctly
+  settles on Municipality (toggle and rendered choropleth both confirm),
+  zero console errors.
+
+**Decisions (§13.2):** none new -- this is a straight owner-requested
+threshold tweak, not a new judgment call.
+
+**⚠ Deviations / open items:** none.
+
+**Next:** portfolio assets (screenshots, `CASE_STUDY.md`); optional custom
+domain for the Pages deployment.
+
+---
+
 ## 2026-08-13 — Live production deployment: R2 + Cloudflare Pages, 2 real bugs caught only by actually deploying (agent: sonnet-5)
 
 Owner: "add a live demo link to the README" -- there wasn't one; standing up
