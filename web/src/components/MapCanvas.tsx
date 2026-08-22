@@ -48,6 +48,11 @@ function choroplethExpr(lens: 'current' | 'future' | 'either'): ExpressionSpecif
   ]
 }
 
+// Owned here, not in SearchMapView.tsx: this component is the one that
+// actually needs it for layer-visibility logic below, not just for
+// labeling a button.
+export type MapLevel = 'county' | 'municipality' | 'parcel'
+
 export interface MapCanvasProps {
   onParcelClick: (props: ParcelTileProps) => void
   flyTo?: { lon: number; lat: number; zoom?: number } | null
@@ -60,12 +65,33 @@ export interface MapCanvasProps {
   // out can't cross back past it into a lower tier; scrolling in stays
   // unrestricted.
   zoomTo?: { zoom: number; minZoom: number } | null
+  // The toggle's own sticky selection (SearchMapView.tsx), not derived from
+  // live zoom. parcels.pmtiles now carries real geometry from z9 up (widened
+  // from its original z13, PROGRESS.md 2026-08-13 "Parcel zoom-out fix,
+  // full scope"), the same floor Municipality already used -- but 9-13 is
+  // also munis-fill's own native range, so both layers are simultaneously
+  // *eligible* to render there by zoom alone. Only one should actually show:
+  // parcels specifically when Parcel is the selected tier (so scrolling out
+  // from an individual parcel keeps showing real parcels, not the
+  // municipality choropleth underneath), the existing muni choropleth
+  // otherwise (so ordinary browsing through that zoom band -- never having
+  // touched the Parcel button -- looks exactly as it always has).
+  activeLevel: MapLevel
 }
 
-export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
+export function MapCanvas({ onParcelClick, flyTo, zoomTo, activeLevel }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const { filters } = useFilters()
+  // Read inside the mount effect's event handlers (registered once, `[]`
+  // deps) without making the whole map re-init on every activeLevel change
+  // -- same established pattern as the other props this component captures
+  // once and reads live via a ref.
+  const activeLevelRef = useRef(activeLevel)
+  activeLevelRef.current = activeLevel
+  // Set by the mount effect once the map exists, called both from there and
+  // from the activeLevel-change effect further down.
+  const updateTierVisibilityRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -107,12 +133,12 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
       })
       map.addLayer({
         id: 'parcels-fill', type: 'fill', source: 'parcels', 'source-layer': 'parcels',
-        minzoom: 13,
+        minzoom: 9,
         paint: { 'fill-color': BAND_MATCH_EXPRESSION as unknown as ExpressionSpecification, 'fill-opacity': 0.8 },
       })
       map.addLayer({
         id: 'parcels-outline', type: 'line', source: 'parcels', 'source-layer': 'parcels',
-        minzoom: 13,
+        minzoom: 9,
         paint: { 'line-color': '#000000', 'line-width': 0.3, 'line-opacity': 0.3 },
       })
 
@@ -128,10 +154,12 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
       })
 
       // Hover tooltip across all 3 tiers, one unified handler rather than
-      // one per layer: counties/munis (<=13) and parcels (>=13) never render
-      // at the same zoom, so querying all three together can never produce
-      // a conflicting pair of hits -- whichever one is actually visible at
-      // the cursor is the only one that comes back.
+      // one per layer. munis-fill and parcels-fill are now both *eligible*
+      // to render across the same 9-13 zoom band, but updateTierVisibility()
+      // below always keeps exactly one of them set to visibility:none there
+      // -- queryRenderedFeatures only returns hits from layers actually
+      // being rendered, so querying all three together still can't produce
+      // a conflicting pair of hits, same as when the ranges were disjoint.
       const tooltip = new Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' })
       const fmtPct = (v: number | undefined | null) => (v == null ? 'n/a' : `${v.toFixed(1)}%`)
       map.on('mousemove', (e) => {
@@ -159,6 +187,45 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
       })
       map.on('mouseout', () => tooltip.remove())
 
+      // munis-fill and parcels-fill are both zoom-eligible across 9-13 now
+      // (parcels.pmtiles widened from z13 to z9, PROGRESS.md 2026-08-13) --
+      // exactly one of them should actually be visible there: parcels when
+      // Parcel is the selected tier (so zooming out from one parcel keeps
+      // showing real parcels, not the municipality choropleth underneath),
+      // munis otherwise (so ordinary scroll-browsing through that band --
+      // never having touched the Parcel button -- looks exactly as it
+      // always has, since that's an existing, already-shipped feature this
+      // change must not regress). Above z13 parcels always win regardless
+      // of activeLevel (munis-fill's own maxzoom:13 already hides it there
+      // natively); that part is unchanged from before this widening.
+      const updateTierVisibility = () => {
+        const parcelMode = activeLevelRef.current === 'parcel'
+        const showParcels = parcelMode || map.getZoom() >= 13
+        map.setLayoutProperty('parcels-fill', 'visibility', showParcels ? 'visible' : 'none')
+        map.setLayoutProperty('parcels-outline', 'visibility', showParcels ? 'visible' : 'none')
+        map.setLayoutProperty('munis-fill', 'visibility', parcelMode ? 'none' : 'visible')
+        map.setLayoutProperty('munis-outline', 'visibility', parcelMode ? 'none' : 'visible')
+        // Test-observability only (same idiom as data-zoom below).
+        // data-parcels-visible reflects this function's own *intent* --
+        // useful, but on its own it would pass even against a stale
+        // tileset that still stops at its old z13 minzoom, since
+        // visibility is just a layout property, not proof of actual data.
+        // data-parcels-have-data queries what's actually rendered right
+        // now, which is the real proof: lets e2e tests confirm the actual
+        // bug this widening fixed -- that picking Parcel and scrolling out
+        // shows real parcel geometry, not a silent fallback to the
+        // municipality choropleth (or an equally silent blank layer if the
+        // tileset were still too narrow) -- without fragile canvas-pixel
+        // inspection.
+        containerRef.current?.setAttribute('data-parcels-visible', String(showParcels))
+        containerRef.current?.setAttribute(
+          'data-parcels-have-data',
+          String(map.queryRenderedFeatures({ layers: ['parcels-fill'] }).length > 0),
+        )
+      }
+      updateTierVisibilityRef.current = updateTierVisibility
+      updateTierVisibility()
+
       // Test-observability only, not read by any app code: the detail-level
       // toggle deliberately doesn't react to live zoom (it's a sticky
       // "last explicit choice" indicator, not a status readout -- see
@@ -174,6 +241,7 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
       }
       reportZoom()
       map.on('zoom', reportZoom)
+      map.on('zoom', updateTierVisibility)
     })
 
     return () => {
@@ -251,6 +319,13 @@ export function MapCanvas({ onParcelClick, flyTo, zoomTo }: MapCanvasProps) {
     map.setMinZoom(zoomTo.minZoom)
     map.easeTo({ zoom: zoomTo.zoom })
   }, [zoomTo])
+
+  // Re-run the visibility swap the instant activeLevel changes (a button
+  // click), rather than waiting for the next 'zoom' event the easeTo above
+  // will soon fire anyway -- avoids a brief flash of the wrong layer.
+  useEffect(() => {
+    updateTierVisibilityRef.current()
+  }, [activeLevel])
 
   return (
     <div

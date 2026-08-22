@@ -5,6 +5,103 @@ Done / Decisions / ⚠ Deviations / Next (+ per-county checklists during statewi
 
 ---
 
+## 2026-08-22 — Parcel zoom-out fix, full scope: parcels.pmtiles widened to z9, real per-tier layer visibility (agent: sonnet-5)
+
+Continues the entry below. Owner's own screenshot caught the same bug that
+entry's "consistency over zoom-out room" compromise was hiding: at the
+Parcel button's new, wider floor, the map showed the municipality
+choropleth underneath, not real parcels -- correct per that day's fix, but
+not what the button's own label implied. Presented the real fork: revert to
+13 (cheap, consistent, but back to the original "too zoomed in" complaint)
+or widen the tileset itself so 9 could be a genuine floor. Owner: full
+scope, and if cheap, take Parcel down to Municipality's own floor (9) too.
+
+**Done:**
+- `pipeline/07_tiles.py`: `PARCEL_MIN_ZOOM` 13 -> 9 (`tippecanoe -Z9 -z16`,
+  `--drop-densest-as-needed` already handles the much larger per-tile
+  feature counts at the wider range). Regenerated statewide: 3,478,722
+  parcels, 21/21 counties, real PMTiles magic bytes confirmed (not the
+  mislabeled-MBTiles bug from earlier this project) -- 809.4MB, up from
+  727.3MB.
+- **`MapCanvas.tsx`: widening the tileset alone would have been a
+  regression, not just a fix.** munis-fill and parcels-fill are now both
+  zoom-*eligible* across the same 9-13 band by minzoom/maxzoom alone --
+  without explicit handling, parcels would silently cover the municipality
+  choropleth for **anyone** scrolling through that range, including people
+  who never touched the Parcel button, since layer visibility by zoom
+  doesn't know which toggle tier is "selected." Added
+  `updateTierVisibility()`: parcels shown when Parcel is the active tier OR
+  zoom>=13 (unchanged z13+ behavior), munis shown otherwise -- exactly one
+  of the two, driven by the toggle's own sticky `activeLevel` state (not
+  raw zoom), re-run on every 'zoom' tick and immediately on each button
+  click. `LEVEL_MIN_ZOOM.parcel` in `SearchMapView.tsx`: 13 -> 9, now
+  genuinely backed by real data instead of the honesty-over-consistency
+  compromise from the entry below.
+- **Two real environment blockers hit and solved along the way, neither
+  bypassed:**
+  - Docker Desktop's WSL2 backend wasn't starting cleanly (`docker ps`
+    hanging indefinitely) -- traced to the `docker-desktop` WSL distro
+    itself stuck "Stopped"; a full `wsl --shutdown` + relaunch fixed it.
+  - Native Windows Python couldn't import pyogrio (geopandas' file-reading
+    engine) at all: `DLL load failed while importing _ogr: An Application
+    Control policy has blocked this file` -- a Windows security policy
+    actively blocking the file, not a missing-DLL or PATH issue (confirmed
+    by first ruling out the DLL-not-found theory, which briefly looked
+    right until adding `pyogrio.libs` to PATH surfaced this real message
+    instead). **Did not attempt to bypass, disable, or reconfigure this
+    policy** -- modifying security settings isn't something to do
+    unilaterally regardless of how solvable it looks technically. Instead,
+    split the pipeline step in two: the GeoJSONL-writing step (the only
+    part that touches geopandas/pyogrio) now runs under WSL Ubuntu's own
+    Linux Python, set up fresh with `uv` for exactly this (bundled Linux
+    `.so` GDAL libraries, no Windows Application Control involvement at
+    all); the tippecanoe/pmtiles-conversion step still runs natively on
+    Windows, where Docker already works fine. Two small one-off scripts
+    (`_wsl_write_geojsonl.py`, `_win_build_parcels_pmtiles.py`) orchestrated
+    this by importing `07_tiles.py`'s own existing functions rather than
+    duplicating their logic -- both deleted once the real tileset was
+    verified; `07_tiles.py` itself is unchanged except the zoom constant.
+  - (Minor, self-inflicted, caught and fixed in the same sitting): running
+    `uv sync` from both WSL and native Windows against the same physical
+    `pipeline/.venv` directory corrupted it (Linux symlinks a Windows `uv`
+    couldn't reconcile) -- deleted and rebuilt cleanly once isolated as the
+    actual cause, not the security policy resurfacing.
+- **Strengthened the e2e test itself, not just the app**: the original
+  `data-parcels-visible` test attribute reflects `updateTierVisibility()`'s
+  own *intent* (a layout property) -- verified this would have stayed
+  "true" even against the *old*, unwidened tileset, since visibility isn't
+  proof of actual data. Added `data-parcels-have-data`
+  (`queryRenderedFeatures` against the real viewport) and confirmed *before*
+  regenerating the tileset that the strengthened assertion correctly
+  **failed** against the stale data -- proof it actually discriminates, not
+  a check that would have passed regardless. Added a fourth test
+  (`map-level-toggle.spec.ts`) confirming Municipality mode still shows the
+  choropleth, not parcels, across 9-13 -- the regression this whole
+  approach exists to prevent. Full suite: 16/16, run twice for stability.
+- **Verified live on the production URL**, not assumed from the local
+  build: clicking Parcel then scrolling out reaches zoom ~9.5, stays
+  pressed on Parcel, `data-parcels-have-data=true`, real scattered parcel
+  geometry visible in a screenshot (not a solid choropleth); Municipality
+  mode re-checked live too, `data-parcels-have-data=false` at zoom 10.5,
+  screenshot shows the clean, unregressed choropleth. Zero console errors
+  in both cases. `parcels.pmtiles` re-uploaded to R2 via the same manual-
+  multipart path as the original upload (2 of 13 parts hit the same
+  transient connectivity errors already documented, retried individually,
+  final object verified byte-for-byte: 848,745,385 bytes both sides).
+
+**Decisions (§13.2):** none new -- the zoom-tier boundaries (9/13) and
+target zooms were already-established values, not re-tuned here.
+
+**⚠ Deviations / open items:** none. The two environment blockers above are
+resolved, not carried forward -- documented in case either recurs (the WSL
+backend restart procedure, the WSL-Python-for-geopandas workaround), not
+because either is still an open problem.
+
+**Next:** portfolio assets (screenshots, `CASE_STUDY.md`); optional custom
+domain for the Pages deployment.
+
+---
+
 ## 2026-08-13 — Parcel's zoom-out floor reverted to 13: content, not just the button, must match "Parcel" (agent: sonnet-5)
 
 Owner, from the prior entry's own screenshot: the "Parcel" button stayed

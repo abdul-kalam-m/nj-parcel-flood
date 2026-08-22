@@ -2,9 +2,15 @@
 """07 — GeoJSONL -> tippecanoe -> PMTiles (§7.1, guide-Phase 6).
 
 Two tilesets:
-- `tiles/parcels.pmtiles` (z13-16, minimal attrs: pin, band, class_group,
+- `tiles/parcels.pmtiles` (z9-16, minimal attrs: pin, band, class_group,
   current/future flags -- deliberately NOT the full parcel_scores schema,
-  per §7.1's own "minimal attrs" instruction and the ≤4GB budget).
+  per §7.1's own "minimal attrs" instruction and the ≤4GB budget). Minzoom
+  widened from the original 13 to 9 post-launch (PROGRESS.md 2026-08-13,
+  "Parcel zoom-out fix") so the web app's Parcel detail-level toggle can
+  zoom out to match Municipality's own floor while still showing real
+  parcel geometry, not switching to the municipality choropleth underneath
+  it -- `--drop-densest-as-needed` (already in use below) handles the
+  much larger per-tile feature counts at the wider zoom range.
 - `tiles/boundaries.pmtiles` (counties + municipalities, two named layers in
   one tileset, summary attrs from Phase 5's aggregates, for choropleths at
   z<13).
@@ -60,7 +66,7 @@ GEOJSONL_DIR = lib.RAW / "_geojsonl"  # scratch, gitignored (under data/raw/)
 
 TIPPECANOE_IMAGE = "klokantech/tippecanoe"
 PMTILES_IMAGE = "protomaps/go-pmtiles"  # the format's own canonical converter
-PARCEL_MIN_ZOOM, PARCEL_MAX_ZOOM = 13, 16
+PARCEL_MIN_ZOOM, PARCEL_MAX_ZOOM = 9, 16
 
 
 def fetch_nj_counties(force: bool) -> gpd.GeoDataFrame:

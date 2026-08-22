@@ -43,7 +43,7 @@ Phase 1 (88.34%, below the guide's ≥97% gate).
 An axe/Playwright suite (§12.2 — PIN search → panel, filter cascades,
 district chart vs. summary JSON, export + disclaimer, axe scans across all
 5 views, plus checks for the toggle's zoom-jump *and* its zoom-floor
-locking, and the map tooltip) is implemented and **passing 15/15**, run
+locking, and the map tooltip) is implemented and **passing 16/16**, run
 repeatedly for stability. Running it for real has repeatedly surfaced and
 fixed genuine bugs, not just test-authoring issues — a real accessible-name
 defect in the filter bar, a serious axe/WCAG 4.1.2 violation, a duplicated
@@ -73,5 +73,22 @@ internal import too (a first attempt looked complete but the worker still
 died silently on load, caught precisely via Playwright's worker-lifecycle
 API, not a console error). Both root-caused and confirmed fixed against
 the real live URL — actual tile traffic, full search → parcel-panel flow,
-all 5 routes. See `PROGRESS.md` (2026-08-13, "Live production deployment")
-for full detail.
+all 5 routes.
+
+**The Parcel detail-level toggle's zoom-out floor now genuinely matches
+Municipality's (9), not just the button.** Widening it turned out to need
+`parcels.pmtiles` itself widened from z13 to z9 (owner: "full scope" once a
+cheaper fix — loosening the floor alone — turned out to leave the map
+showing the municipality choropleth while the button still said "Parcel").
+`MapCanvas.tsx` now explicitly switches which layer is visible per selected
+tier, so the existing municipality choropleth isn't regressed for anyone
+who never touches the Parcel button. Regenerating the statewide tileset
+(3.4M parcels) surfaced two real local-environment blockers, both solved
+without touching any security setting: Docker Desktop's WSL2 backend
+needed a clean restart, and a Windows Application Control policy was
+blocking Python's GDAL bindings natively — worked around by running just
+that pipeline step under WSL Ubuntu instead. Verified live on the
+production URL: real parcel geometry renders all the way to the shared
+floor, the municipality choropleth is unaffected in its own mode. See
+`PROGRESS.md` (2026-08-22, "Parcel zoom-out fix, full scope") for full
+detail.
